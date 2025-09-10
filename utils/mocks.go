@@ -48,7 +48,6 @@ func NewMockHTTPClient() *MockHTTPClient {
 // Do implements the http.Client.Do method for mocking
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	m.lastRequest = req
 	key := req.Method + " " + req.URL.String()
@@ -82,38 +81,45 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 	// Check for artificial delay
 	if delay, exists := m.delayMap[key]; exists {
-		m.mu.Unlock()
+		m.mu.Unlock() // Unlock before delay
 		select {
 		case <-req.Context().Done():
 			return nil, req.Context().Err()
 		case <-time.After(delay):
 		}
-		m.mu.Lock()
+		m.mu.Lock() // Re-acquire lock after delay
 	}
 
 	// Use custom doFunc if set
 	if m.doFunc != nil {
-		return m.doFunc(req)
+		result, err := m.doFunc(req)
+		m.mu.Unlock()
+		return result, err
 	}
 
 	if err, exists := m.errors[key]; exists {
+		m.mu.Unlock()
 		return nil, err
 	}
 
 	if resp, exists := m.responses[key]; exists {
+		m.mu.Unlock()
 		return resp, nil
 	}
 
 	// Use defaults
 	if m.defaultError != nil {
+		m.mu.Unlock()
 		return nil, m.defaultError
 	}
 
 	if m.defaultResponse != nil {
+		m.mu.Unlock()
 		return m.defaultResponse, nil
 	}
 
 	// Default response
+	m.mu.Unlock()
 	return &http.Response{
 		StatusCode: 200,
 		Body:       io.NopCloser(strings.NewReader(`{"success": true}`)),

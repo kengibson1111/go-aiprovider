@@ -58,15 +58,19 @@ func TestEnvironmentConstants(t *testing.T) {
 	constants := []string{
 		ClaudeAPIKeyEnv,
 		ClaudeModelEnv,
+		ClaudeAPIEndpointEnv,
 		OpenAIAPIKeyEnv,
 		OpenAIModelEnv,
+		OpenAIAPIEndpointEnv,
 	}
 
 	expected := []string{
 		"CLAUDE_API_KEY",
 		"CLAUDE_MODEL",
+		"CLAUDE_API_ENDPOINT",
 		"OPENAI_API_KEY",
 		"OPENAI_MODEL",
+		"OPENAI_API_ENDPOINT",
 	}
 
 	for i, constant := range constants {
@@ -78,12 +82,14 @@ func TestEnvironmentConstants(t *testing.T) {
 
 func TestLoadTestConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		claudeAPIKey   string
-		claudeModel    string
-		openaiAPIKey   string
-		openaiModel    string
-		expectedConfig *TestConfig
+		name              string
+		claudeAPIKey      string
+		claudeModel       string
+		claudeAPIEndpoint string
+		openaiAPIKey      string
+		openaiModel       string
+		openaiAPIEndpoint string
+		expectedConfig    *TestConfig
 	}{
 		{
 			name:         "loads config with all environment variables set",
@@ -92,10 +98,12 @@ func TestLoadTestConfig(t *testing.T) {
 			openaiAPIKey: "test-openai-key",
 			openaiModel:  "gpt-4",
 			expectedConfig: &TestConfig{
-				ClaudeAPIKey: "test-claude-key",
-				ClaudeModel:  "claude-3-opus-20240229",
-				OpenAIAPIKey: "test-openai-key",
-				OpenAIModel:  "gpt-4",
+				ClaudeAPIKey:      "test-claude-key",
+				ClaudeModel:       "claude-3-opus-20240229",
+				ClaudeAPIEndpoint: "",
+				OpenAIAPIKey:      "test-openai-key",
+				OpenAIModel:       "gpt-4",
+				OpenAIAPIEndpoint: "",
 			},
 		},
 		{
@@ -103,19 +111,38 @@ func TestLoadTestConfig(t *testing.T) {
 			claudeAPIKey: "test-claude-key",
 			openaiAPIKey: "test-openai-key",
 			expectedConfig: &TestConfig{
-				ClaudeAPIKey: "test-claude-key",
-				ClaudeModel:  "claude-3-sonnet-20240229",
-				OpenAIAPIKey: "test-openai-key",
-				OpenAIModel:  "gpt-3.5-turbo",
+				ClaudeAPIKey:      "test-claude-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "",
+				OpenAIAPIKey:      "test-openai-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "",
 			},
 		},
 		{
 			name: "loads config with empty API keys",
 			expectedConfig: &TestConfig{
-				ClaudeAPIKey: "",
-				ClaudeModel:  "claude-3-sonnet-20240229",
-				OpenAIAPIKey: "",
-				OpenAIModel:  "gpt-3.5-turbo",
+				ClaudeAPIKey:      "",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "",
+				OpenAIAPIKey:      "",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "",
+			},
+		},
+		{
+			name:              "loads config with custom endpoints",
+			claudeAPIKey:      "test-claude-key",
+			claudeAPIEndpoint: "https://custom-claude.example.com",
+			openaiAPIKey:      "test-openai-key",
+			openaiAPIEndpoint: "https://custom-openai.example.com",
+			expectedConfig: &TestConfig{
+				ClaudeAPIKey:      "test-claude-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "https://custom-claude.example.com",
+				OpenAIAPIKey:      "test-openai-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "https://custom-openai.example.com",
 			},
 		},
 	}
@@ -126,8 +153,10 @@ func TestLoadTestConfig(t *testing.T) {
 			defer func() {
 				os.Unsetenv(ClaudeAPIKeyEnv)
 				os.Unsetenv(ClaudeModelEnv)
+				os.Unsetenv(ClaudeAPIEndpointEnv)
 				os.Unsetenv(OpenAIAPIKeyEnv)
 				os.Unsetenv(OpenAIModelEnv)
+				os.Unsetenv(OpenAIAPIEndpointEnv)
 			}()
 
 			// Set up test environment variables
@@ -137,11 +166,17 @@ func TestLoadTestConfig(t *testing.T) {
 			if tt.claudeModel != "" {
 				os.Setenv(ClaudeModelEnv, tt.claudeModel)
 			}
+			if tt.claudeAPIEndpoint != "" {
+				os.Setenv(ClaudeAPIEndpointEnv, tt.claudeAPIEndpoint)
+			}
 			if tt.openaiAPIKey != "" {
 				os.Setenv(OpenAIAPIKeyEnv, tt.openaiAPIKey)
 			}
 			if tt.openaiModel != "" {
 				os.Setenv(OpenAIModelEnv, tt.openaiModel)
+			}
+			if tt.openaiAPIEndpoint != "" {
+				os.Setenv(OpenAIAPIEndpointEnv, tt.openaiAPIEndpoint)
 			}
 
 			config, err := LoadTestConfig()
@@ -156,11 +191,17 @@ func TestLoadTestConfig(t *testing.T) {
 			if config.ClaudeModel != tt.expectedConfig.ClaudeModel {
 				t.Errorf("ClaudeModel = %s, want %s", config.ClaudeModel, tt.expectedConfig.ClaudeModel)
 			}
+			if config.ClaudeAPIEndpoint != tt.expectedConfig.ClaudeAPIEndpoint {
+				t.Errorf("ClaudeAPIEndpoint = %s, want %s", config.ClaudeAPIEndpoint, tt.expectedConfig.ClaudeAPIEndpoint)
+			}
 			if config.OpenAIAPIKey != tt.expectedConfig.OpenAIAPIKey {
 				t.Errorf("OpenAIAPIKey = %s, want %s", config.OpenAIAPIKey, tt.expectedConfig.OpenAIAPIKey)
 			}
 			if config.OpenAIModel != tt.expectedConfig.OpenAIModel {
 				t.Errorf("OpenAIModel = %s, want %s", config.OpenAIModel, tt.expectedConfig.OpenAIModel)
+			}
+			if config.OpenAIAPIEndpoint != tt.expectedConfig.OpenAIAPIEndpoint {
+				t.Errorf("OpenAIAPIEndpoint = %s, want %s", config.OpenAIAPIEndpoint, tt.expectedConfig.OpenAIAPIEndpoint)
 			}
 		})
 	}

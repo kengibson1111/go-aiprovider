@@ -42,10 +42,12 @@ func GetEnvVar(key, defaultValue string) string {
 
 // TestConfig provides configuration for integration tests
 type TestConfig struct {
-	ClaudeAPIKey string
-	ClaudeModel  string
-	OpenAIAPIKey string
-	OpenAIModel  string
+	ClaudeAPIKey      string
+	ClaudeModel       string
+	ClaudeAPIEndpoint string
+	OpenAIAPIKey      string
+	OpenAIModel       string
+	OpenAIAPIEndpoint string
 }
 
 // LoadTestConfig loads configuration for integration tests
@@ -57,10 +59,12 @@ func LoadTestConfig() (*TestConfig, error) {
 	}
 
 	config := &TestConfig{
-		ClaudeAPIKey: os.Getenv(ClaudeAPIKeyEnv),
-		ClaudeModel:  GetEnvVar(ClaudeModelEnv, "claude-3-sonnet-20240229"),
-		OpenAIAPIKey: os.Getenv(OpenAIAPIKeyEnv),
-		OpenAIModel:  GetEnvVar(OpenAIModelEnv, "gpt-3.5-turbo"),
+		ClaudeAPIKey:      os.Getenv(ClaudeAPIKeyEnv),
+		ClaudeModel:       GetEnvVar(ClaudeModelEnv, "claude-3-sonnet-20240229"),
+		ClaudeAPIEndpoint: os.Getenv(ClaudeAPIEndpointEnv),
+		OpenAIAPIKey:      os.Getenv(OpenAIAPIKeyEnv),
+		OpenAIModel:       GetEnvVar(OpenAIModelEnv, "gpt-3.5-turbo"),
+		OpenAIAPIEndpoint: os.Getenv(OpenAIAPIEndpointEnv),
 	}
 
 	return config, nil

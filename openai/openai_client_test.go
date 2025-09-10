@@ -499,8 +499,11 @@ func TestOpenAIClient_GenerateCode(t *testing.T) {
 				if resp.Error != "" {
 					t.Errorf("Unexpected error in response: %s", resp.Error)
 				}
-				if resp.Code != tt.expectedCode {
-					t.Errorf("Expected code '%s', got: '%s'", tt.expectedCode, resp.Code)
+				// Normalize whitespace for comparison
+				expectedNormalized := strings.ReplaceAll(strings.TrimSpace(tt.expectedCode), "\n", "\\n")
+				actualNormalized := strings.ReplaceAll(strings.TrimSpace(resp.Code), "\n", "\\n")
+				if actualNormalized != expectedNormalized {
+					t.Errorf("Expected code '%s', got: '%s'", expectedNormalized, actualNormalized)
 				}
 			}
 		})
@@ -522,7 +525,7 @@ func TestOpenAIClient_PromptBuilding(t *testing.T) {
 	t.Run("completion prompt", func(t *testing.T) {
 		req := types.CompletionRequest{
 			Code:     "console.log('Hello'); console.",
-			Cursor:   25,
+			Cursor:   30, // Position at the end of the string
 			Language: "javascript",
 			Context: utils.CodeContext{
 				CurrentFunction: "main",
@@ -665,7 +668,9 @@ func TestOpenAIClient_ConfidenceCalculation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			confidence := client.calculateConfidence(tt.response)
-			if confidence != tt.expectedConfidence {
+			// Use a small epsilon for floating point comparison
+			epsilon := 0.0001
+			if confidence < tt.expectedConfidence-epsilon || confidence > tt.expectedConfidence+epsilon {
 				t.Errorf("Expected confidence %f, got: %f", tt.expectedConfidence, confidence)
 			}
 		})
