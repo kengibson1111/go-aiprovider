@@ -6,12 +6,17 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Environment variable names
+// Environment variable names for API configuration
 const (
-	ClaudeAPIKeyEnv = "CLAUDE_API_KEY"
-	ClaudeModelEnv  = "CLAUDE_MODEL"
-	OpenAIAPIKeyEnv = "OPENAI_API_KEY"
-	OpenAIModelEnv  = "OPENAI_MODEL"
+	// Claude API configuration
+	ClaudeAPIKeyEnv      = "CLAUDE_API_KEY"      // Claude API authentication key
+	ClaudeModelEnv       = "CLAUDE_MODEL"        // Claude model name to use
+	ClaudeAPIEndpointEnv = "CLAUDE_API_ENDPOINT" // Custom Claude API base URL (optional)
+
+	// OpenAI API configuration
+	OpenAIAPIKeyEnv      = "OPENAI_API_KEY"      // OpenAI API authentication key
+	OpenAIModelEnv       = "OPENAI_MODEL"        // OpenAI model name to use
+	OpenAIAPIEndpointEnv = "OPENAI_API_ENDPOINT" // Custom OpenAI API base URL (optional)
 )
 
 // LoadEnvConfig loads environment variables from .env file if it exists
