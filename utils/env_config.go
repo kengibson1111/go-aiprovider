@@ -34,3 +34,49 @@ func GetEnvVar(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// TestConfig provides configuration for integration tests
+type TestConfig struct {
+	ClaudeAPIKey string
+	ClaudeModel  string
+	OpenAIAPIKey string
+	OpenAIModel  string
+}
+
+// LoadTestConfig loads configuration for integration tests
+// Returns error if required environment variables are missing
+func LoadTestConfig() (*TestConfig, error) {
+	// First load environment variables from .env file if it exists
+	if err := LoadEnvConfig(); err != nil {
+		return nil, err
+	}
+
+	config := &TestConfig{
+		ClaudeAPIKey: os.Getenv(ClaudeAPIKeyEnv),
+		ClaudeModel:  GetEnvVar(ClaudeModelEnv, "claude-3-sonnet-20240229"),
+		OpenAIAPIKey: os.Getenv(OpenAIAPIKeyEnv),
+		OpenAIModel:  GetEnvVar(OpenAIModelEnv, "gpt-3.5-turbo"),
+	}
+
+	return config, nil
+}
+
+// CanRunClaudeIntegrationTests checks if Claude integration tests can run
+// Returns true if Claude API key is available
+func CanRunClaudeIntegrationTests() bool {
+	LoadEnvConfig() // Load .env if available, ignore errors
+	return os.Getenv(ClaudeAPIKeyEnv) != ""
+}
+
+// CanRunOpenAIIntegrationTests checks if OpenAI integration tests can run
+// Returns true if OpenAI API key is available
+func CanRunOpenAIIntegrationTests() bool {
+	LoadEnvConfig() // Load .env if available, ignore errors
+	return os.Getenv(OpenAIAPIKeyEnv) != ""
+}
+
+// CanRunIntegrationTests checks if any integration tests can run
+// Returns true if at least one API key is available
+func CanRunIntegrationTests() bool {
+	return CanRunClaudeIntegrationTests() || CanRunOpenAIIntegrationTests()
+}
