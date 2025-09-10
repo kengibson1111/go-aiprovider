@@ -761,3 +761,152 @@ func TestOpenAIClient_RateLimitHandling(t *testing.T) {
 		t.Errorf("Expected no suggestions for rate limit error, got: %d", len(resp.Suggestions))
 	}
 }
+
+// Integration Tests - These tests use real OpenAI API endpoints
+
+func TestOpenAIClient_ValidateCredentials_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai",
+		APIKey:   testConfig.OpenAIAPIKey,
+		Model:    testConfig.OpenAIModel,
+	}
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client: %v", err)
+	}
+
+	ctx := context.Background()
+	err = client.ValidateCredentials(ctx)
+
+	if err != nil {
+		t.Errorf("Failed to validate credentials with real API: %v", err)
+	}
+}
+
+func TestOpenAIClient_GenerateCompletion_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	config := &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      testConfig.OpenAIAPIKey,
+		Model:       testConfig.OpenAIModel,
+		MaxTokens:   100,
+		Temperature: 0.1, // Low temperature for more predictable results
+	}
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client: %v", err)
+	}
+
+	req := types.CompletionRequest{
+		Code:     "console.",
+		Cursor:   8,
+		Language: "javascript",
+		Context: utils.CodeContext{
+			CurrentFunction: "testFunction",
+			Imports:         []string{"import fs from 'fs'"},
+			ProjectType:     "Node.js",
+			RecentChanges:   []string{},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := client.GenerateCompletion(ctx, req)
+
+	if err != nil {
+		t.Fatalf("Failed to generate completion with real API: %v", err)
+	}
+
+	if resp.Error != "" {
+		t.Errorf("Unexpected error in response: %s", resp.Error)
+	}
+
+	if len(resp.Suggestions) == 0 {
+		t.Errorf("Expected at least one suggestion from real API")
+	}
+
+	if resp.Confidence <= 0 {
+		t.Errorf("Expected positive confidence score, got: %f", resp.Confidence)
+	}
+
+	// Verify suggestions are reasonable for JavaScript console completion
+	for i, suggestion := range resp.Suggestions {
+		if suggestion == "" {
+			t.Errorf("Suggestion %d has empty text", i)
+		}
+	}
+}
+
+func TestOpenAIClient_GenerateCode_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	config := &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      testConfig.OpenAIAPIKey,
+		Model:       testConfig.OpenAIModel,
+		MaxTokens:   200,
+		Temperature: 0.1, // Low temperature for more predictable results
+	}
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client: %v", err)
+	}
+
+	req := types.CodeGenerationRequest{
+		Prompt:   "Create a simple JavaScript function that adds two numbers",
+		Language: "javascript",
+		Context: utils.CodeContext{
+			CurrentFunction: "",
+			Imports:         []string{},
+			ProjectType:     "Node.js",
+			RecentChanges:   []string{},
+		},
+	}
+
+	ctx := context.Background()
+	resp, err := client.GenerateCode(ctx, req)
+
+	if err != nil {
+		t.Fatalf("Failed to generate code with real API: %v", err)
+	}
+
+	if resp.Error != "" {
+		t.Errorf("Unexpected error in response: %s", resp.Error)
+	}
+
+	if resp.Code == "" {
+		t.Errorf("Expected generated code from real API")
+	}
+
+	// Verify the generated code contains expected elements for a simple add function
+	code := strings.ToLower(resp.Code)
+	if !strings.Contains(code, "function") && !strings.Contains(code, "=>") {
+		t.Errorf("Generated code doesn't appear to contain a function definition: %s", resp.Code)
+	}
+}
