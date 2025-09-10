@@ -1,6 +1,7 @@
 package claude
 
 import (
+	"context"
 	"testing"
 
 	"github.com/kengibson1111/go-aiprovider/types"
@@ -320,6 +321,159 @@ func TestCalculateConfidence(t *testing.T) {
 				t.Errorf("Expected confidence between %f and %f, got %f", tt.minConf, tt.maxConf, confidence)
 			}
 		})
+	}
+}
+
+// Integration Tests - These tests use real API endpoints
+
+func TestClaudeIntegration_GenerateCompletion(t *testing.T) {
+	if !utils.CanRunClaudeIntegrationTests() {
+		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
+	}
+
+	// Load test configuration
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client with real configuration
+	config := &types.AIConfig{
+		Provider: "claude",
+		APIKey:   testConfig.ClaudeAPIKey,
+		Model:    testConfig.ClaudeModel,
+	}
+
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Claude client: %v", err)
+	}
+
+	// Test completion request
+	req := types.CompletionRequest{
+		Code:     "function greet(name) {\n  console.log('Hello, ' + ",
+		Cursor:   42, // Position after the +
+		Language: "javascript",
+		Context: utils.CodeContext{
+			CurrentFunction: "greet",
+			ProjectType:     "Node.js",
+		},
+	}
+
+	ctx := context.Background()
+	response, err := client.GenerateCompletion(ctx, req)
+	if err != nil {
+		t.Fatalf("GenerateCompletion failed: %v", err)
+	}
+
+	// Verify response structure
+	if response == nil {
+		t.Fatal("Expected non-nil response")
+	}
+
+	if len(response.Suggestions) == 0 {
+		t.Error("Expected at least one suggestion")
+	}
+
+	if response.Confidence < 0 || response.Confidence > 1 {
+		t.Errorf("Expected confidence between 0 and 1, got %f", response.Confidence)
+	}
+
+	// Verify suggestions are reasonable
+	for i, suggestion := range response.Suggestions {
+		if suggestion == "" {
+			t.Errorf("Suggestion %d is empty", i)
+		}
+	}
+}
+
+func TestClaudeIntegration_GenerateCode(t *testing.T) {
+	if !utils.CanRunClaudeIntegrationTests() {
+		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
+	}
+
+	// Load test configuration
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client with real configuration
+	config := &types.AIConfig{
+		Provider: "claude",
+		APIKey:   testConfig.ClaudeAPIKey,
+		Model:    testConfig.ClaudeModel,
+	}
+
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Claude client: %v", err)
+	}
+
+	// Test code generation request
+	req := types.CodeGenerationRequest{
+		Prompt:   "Create a simple function that adds two numbers and returns the result",
+		Language: "javascript",
+		Context: utils.CodeContext{
+			ProjectType: "Node.js",
+		},
+	}
+
+	ctx := context.Background()
+	response, err := client.GenerateCode(ctx, req)
+	if err != nil {
+		t.Fatalf("GenerateCode failed: %v", err)
+	}
+
+	// Verify response structure
+	if response == nil {
+		t.Fatal("Expected non-nil response")
+	}
+
+	if response.Code == "" {
+		t.Error("Expected generated code to be non-empty")
+	}
+
+	// Basic validation that the code looks reasonable
+	if len(response.Code) < 10 {
+		t.Error("Generated code seems too short to be a meaningful function")
+	}
+}
+
+func TestClaudeIntegration_ErrorHandling(t *testing.T) {
+	if !utils.CanRunClaudeIntegrationTests() {
+		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
+	}
+
+	// Load test configuration
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client with invalid model to test error handling
+	config := &types.AIConfig{
+		Provider: "claude",
+		APIKey:   testConfig.ClaudeAPIKey,
+		Model:    "invalid-model-name",
+	}
+
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Claude client: %v", err)
+	}
+
+	// Test that invalid model returns appropriate error
+	req := types.CompletionRequest{
+		Code:     "function test() {",
+		Cursor:   16,
+		Language: "javascript",
+	}
+
+	ctx := context.Background()
+	_, err = client.GenerateCompletion(ctx, req)
+	if err == nil {
+		t.Error("Expected error for invalid model, but got none")
 	}
 }
 
