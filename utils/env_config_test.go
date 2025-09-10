@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -324,6 +325,153 @@ func TestCanRunIntegrationTests(t *testing.T) {
 			result := CanRunIntegrationTests()
 			if result != tt.expected {
 				t.Errorf("CanRunIntegrationTests() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateEndpointURL(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		expectError bool
+		errorMsg    string
+	}{
+		// Valid URLs
+		{
+			name:        "empty URL is valid",
+			url:         "",
+			expectError: false,
+		},
+		{
+			name:        "valid https URL",
+			url:         "https://api.example.com",
+			expectError: false,
+		},
+		{
+			name:        "valid http URL",
+			url:         "http://api.example.com",
+			expectError: false,
+		},
+		{
+			name:        "valid URL with port",
+			url:         "https://api.example.com:8080",
+			expectError: false,
+		},
+		{
+			name:        "valid URL with path",
+			url:         "https://api.example.com/v1",
+			expectError: false,
+		},
+		{
+			name:        "valid URL with path and port",
+			url:         "https://api.example.com:8080/v1/api",
+			expectError: false,
+		},
+		{
+			name:        "valid localhost URL",
+			url:         "http://localhost:3000",
+			expectError: false,
+		},
+		{
+			name:        "valid IP address URL",
+			url:         "https://192.168.1.1:8080",
+			expectError: false,
+		},
+
+		// Invalid URLs - Missing protocol
+		{
+			name:        "missing protocol scheme",
+			url:         "api.example.com",
+			expectError: true,
+			errorMsg:    "URL must include protocol scheme (http:// or https://)",
+		},
+		{
+			name:        "missing protocol with path",
+			url:         "api.example.com/v1",
+			expectError: true,
+			errorMsg:    "URL must include protocol scheme (http:// or https://)",
+		},
+
+		// Invalid URLs - Wrong protocol
+		{
+			name:        "ftp protocol not allowed",
+			url:         "ftp://api.example.com",
+			expectError: true,
+			errorMsg:    "URL protocol must be http or https, got: ftp",
+		},
+		{
+			name:        "ws protocol not allowed",
+			url:         "ws://api.example.com",
+			expectError: true,
+			errorMsg:    "URL protocol must be http or https, got: ws",
+		},
+
+		// Invalid URLs - Missing hostname
+		{
+			name:        "missing hostname",
+			url:         "https://",
+			expectError: true,
+			errorMsg:    "URL must include a hostname",
+		},
+		{
+			name:        "protocol only",
+			url:         "http://",
+			expectError: true,
+			errorMsg:    "URL must include a hostname",
+		},
+
+		// Invalid URLs - Query parameters
+		{
+			name:        "URL with query parameters",
+			url:         "https://api.example.com?param=value",
+			expectError: true,
+			errorMsg:    "URL must not contain query parameters, found: ?param=value",
+		},
+		{
+			name:        "URL with multiple query parameters",
+			url:         "https://api.example.com?param1=value1&param2=value2",
+			expectError: true,
+			errorMsg:    "URL must not contain query parameters, found: ?param1=value1&param2=value2",
+		},
+
+		// Invalid URLs - Malformed
+		{
+			name:        "malformed URL with space in hostname",
+			url:         "https://api example.com",
+			expectError: true,
+			errorMsg:    "invalid URL format",
+		},
+		{
+			name:        "invalid URL format",
+			url:         "not-a-url",
+			expectError: true,
+			errorMsg:    "URL must include protocol scheme (http:// or https://)",
+		},
+		{
+			name:        "URL with invalid characters in hostname",
+			url:         "https://api.exam ple.com",
+			expectError: true,
+			errorMsg:    "invalid URL format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateEndpointURL(tt.url)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("validateEndpointURL(%s) expected error but got nil", tt.url)
+					return
+				}
+				if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("validateEndpointURL(%s) error = %v, want error containing %s", tt.url, err, tt.errorMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("validateEndpointURL(%s) unexpected error: %v", tt.url, err)
+				}
 			}
 		})
 	}

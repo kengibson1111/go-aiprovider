@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -18,6 +21,54 @@ const (
 	OpenAIModelEnv       = "OPENAI_MODEL"        // OpenAI model name to use
 	OpenAIAPIEndpointEnv = "OPENAI_API_ENDPOINT" // Custom OpenAI API base URL (optional)
 )
+
+// validateEndpointURL validates that a URL is properly formatted for API endpoints
+// Returns error if URL is invalid, nil if valid or empty
+func validateEndpointURL(endpoint string) error {
+	// Empty URLs are allowed (will use defaults)
+	if endpoint == "" {
+		return nil
+	}
+
+	// Parse the URL
+	parsedURL, err := url.Parse(endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid URL format: %v", err)
+	}
+
+	// Check for required protocol scheme
+	if parsedURL.Scheme == "" {
+		return fmt.Errorf("URL must include protocol scheme (http:// or https://)")
+	}
+
+	// Only allow http and https schemes
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return fmt.Errorf("URL protocol must be http or https, got: %s", parsedURL.Scheme)
+	}
+
+	// Check for hostname
+	if parsedURL.Host == "" {
+		return fmt.Errorf("URL must include a hostname")
+	}
+
+	// Reject URLs with query parameters to prevent configuration errors
+	if parsedURL.RawQuery != "" {
+		return fmt.Errorf("URL must not contain query parameters, found: ?%s", parsedURL.RawQuery)
+	}
+
+	// Additional validation for malformed hostnames
+	hostname := parsedURL.Hostname()
+	if hostname == "" {
+		return fmt.Errorf("URL contains invalid hostname")
+	}
+
+	// Check for obviously malformed hostnames
+	if strings.Contains(hostname, " ") {
+		return fmt.Errorf("hostname cannot contain spaces")
+	}
+
+	return nil
+}
 
 // LoadEnvConfig loads environment variables from .env file if it exists
 // Returns nil if successful or if .env file doesn't exist
