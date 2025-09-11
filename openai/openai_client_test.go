@@ -769,6 +769,110 @@ func TestOpenAIClient_RateLimitHandling(t *testing.T) {
 
 // Integration Tests - These tests use real OpenAI API endpoints
 
+func TestOpenAIClient_CallWithPrompt_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client using enhanced TestConfig with custom settings for testing
+	config := testConfig.CreateOpenAIConfig()
+	config.MaxTokens = 150
+	config.Temperature = 0.1 // Low temperature for more predictable results
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test cases with different types of prompts that are distinct from GenerateCompletion and GenerateCode
+	testCases := []struct {
+		name           string
+		prompt         string
+		expectedInResp []string // Keywords we expect to find in the response
+		minLength      int      // Minimum expected response length
+	}{
+		{
+			name:           "creative writing prompt",
+			prompt:         "Write a haiku about programming. Return only the haiku, no explanations.",
+			expectedInResp: []string{}, // Haiku content is unpredictable, just check it's not empty
+			minLength:      10,
+		},
+		{
+			name:           "mathematical calculation",
+			prompt:         "What is 15 * 23? Provide only the numerical answer.",
+			expectedInResp: []string{"345"}, // Should contain the correct answer
+			minLength:      1,
+		},
+		{
+			name:           "simple question answering",
+			prompt:         "What is the capital of France? Answer in one word only.",
+			expectedInResp: []string{"Paris"}, // Should contain Paris
+			minLength:      3,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := client.CallWithPrompt(ctx, tc.prompt)
+
+			if err != nil {
+				t.Fatalf("CallWithPrompt failed for %s: %v", tc.name, err)
+			}
+
+			if len(resp) == 0 {
+				t.Errorf("Expected non-empty response for %s", tc.name)
+				return
+			}
+
+			// Parse the response to verify it's valid JSON
+			var openaiResp OpenAIResponse
+			if err := json.Unmarshal(resp, &openaiResp); err != nil {
+				t.Errorf("Failed to unmarshal response for %s: %v", tc.name, err)
+				return
+			}
+
+			// Verify response structure
+			if len(openaiResp.Choices) == 0 {
+				t.Errorf("Expected at least one choice in response for %s", tc.name)
+				return
+			}
+
+			content := openaiResp.Choices[0].Message.Content
+			if len(content) < tc.minLength {
+				t.Errorf("Response content too short for %s. Expected at least %d characters, got %d: %s",
+					tc.name, tc.minLength, len(content), content)
+			}
+
+			// Check for expected keywords in response
+			for _, expected := range tc.expectedInResp {
+				if !strings.Contains(strings.ToLower(content), strings.ToLower(expected)) {
+					t.Errorf("Expected response for %s to contain '%s', but got: %s",
+						tc.name, expected, content)
+				}
+			}
+
+			// Verify response metadata
+			if openaiResp.Model == "" {
+				t.Errorf("Expected model field to be set in response for %s", tc.name)
+			}
+
+			if openaiResp.ID == "" {
+				t.Errorf("Expected ID field to be set in response for %s", tc.name)
+			}
+
+			// Log the response for manual verification during development
+			t.Logf("Response for %s: %s", tc.name, content)
+		})
+	}
+}
+
 func TestOpenAIClient_ValidateCredentials_Integration(t *testing.T) {
 	if !utils.CanRunOpenAIIntegrationTests() {
 		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
