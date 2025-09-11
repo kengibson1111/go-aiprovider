@@ -1,16 +1,115 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 )
 
 func TestLoadEnvConfig(t *testing.T) {
-	// Test loading when .env file doesn't exist
-	err := LoadEnvConfig()
-	if err != nil {
-		t.Errorf("LoadEnvConfig() should not error when .env file doesn't exist, got: %v", err)
+	tests := []struct {
+		name           string
+		setupEnvFile   bool
+		envFileContent string
+		envFileName    string
+		expectError    bool
+		errorContains  string
+		testEnvVar     string
+		expectedValue  string
+	}{
+		{
+			name:         "no .env file exists - should not error",
+			setupEnvFile: false,
+			expectError:  false,
+		},
+		{
+			name:           "valid .env file in current directory",
+			setupEnvFile:   true,
+			envFileContent: "TEST_VAR=test_value\nANOTHER_VAR=another_value\n",
+			envFileName:    ".env",
+			expectError:    false,
+			testEnvVar:     "TEST_VAR",
+			expectedValue:  "test_value",
+		},
+		{
+			name:           "valid .env file in parent directory",
+			setupEnvFile:   true,
+			envFileContent: "PARENT_TEST_VAR=parent_value\n",
+			envFileName:    "../.env",
+			expectError:    false,
+			testEnvVar:     "PARENT_TEST_VAR",
+			expectedValue:  "parent_value",
+		},
+		{
+			name:           "empty .env file",
+			setupEnvFile:   true,
+			envFileContent: "",
+			envFileName:    ".env",
+			expectError:    false,
+		},
+		{
+			name:           ".env file with comments and empty lines",
+			setupEnvFile:   true,
+			envFileContent: "# This is a comment\nTEST_VAR=test_value\n\n# Another comment\nANOTHER_VAR=another_value\n",
+			envFileName:    ".env",
+			expectError:    false,
+			testEnvVar:     "TEST_VAR",
+			expectedValue:  "test_value",
+		},
+		{
+			name:           ".env file with special characters in values",
+			setupEnvFile:   true,
+			envFileContent: "SPECIAL_VAR=value with spaces and symbols!@#$%\nURL_VAR=https://example.com/path?param=value\n",
+			envFileName:    ".env",
+			expectError:    false,
+			testEnvVar:     "SPECIAL_VAR",
+			expectedValue:  "value with spaces and symbols!@#$%",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clean up any existing test environment variables
+			if tt.testEnvVar != "" {
+				defer os.Unsetenv(tt.testEnvVar)
+			}
+
+			// Set up test .env file if needed
+			if tt.setupEnvFile {
+				err := os.WriteFile(tt.envFileName, []byte(tt.envFileContent), 0644)
+				if err != nil {
+					t.Fatalf("Failed to create test .env file: %v", err)
+				}
+				defer os.Remove(tt.envFileName)
+			}
+
+			// Test LoadEnvConfig
+			err := LoadEnvConfig()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("LoadEnvConfig() expected error but got nil")
+					return
+				}
+				if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("LoadEnvConfig() error = %v, want error containing %s", err, tt.errorContains)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("LoadEnvConfig() unexpected error: %v", err)
+					return
+				}
+
+				// If we expect a specific environment variable to be set, check it
+				if tt.testEnvVar != "" && tt.expectedValue != "" {
+					actualValue := os.Getenv(tt.testEnvVar)
+					if actualValue != tt.expectedValue {
+						t.Errorf("After LoadEnvConfig(), %s = %s, want %s", tt.testEnvVar, actualValue, tt.expectedValue)
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -21,6 +120,7 @@ func TestGetEnvVar(t *testing.T) {
 		defaultValue string
 		envValue     string
 		expected     string
+		description  string
 	}{
 		{
 			name:         "returns environment value when set",
@@ -28,6 +128,7 @@ func TestGetEnvVar(t *testing.T) {
 			defaultValue: "default",
 			envValue:     "env_value",
 			expected:     "env_value",
+			description:  "Should return the environment variable value when it exists",
 		},
 		{
 			name:         "returns default when env var not set",
@@ -35,20 +136,335 @@ func TestGetEnvVar(t *testing.T) {
 			defaultValue: "default",
 			envValue:     "",
 			expected:     "default",
+			description:  "Should return the default value when environment variable doesn't exist",
+		},
+		{
+			name:         "returns environment value when set to empty string",
+			key:          "EMPTY_VAR",
+			defaultValue: "default",
+			envValue:     "",
+			expected:     "default",
+			description:  "Should return default when environment variable is set but empty",
+		},
+		{
+			name:         "returns empty default when specified",
+			key:          "NONEXISTENT_VAR2",
+			defaultValue: "",
+			envValue:     "",
+			expected:     "",
+			description:  "Should return empty string when default is empty and env var doesn't exist",
+		},
+		{
+			name:         "handles special characters in environment value",
+			key:          "SPECIAL_CHAR_VAR",
+			defaultValue: "default",
+			envValue:     "value with spaces, symbols!@#$%, and unicode: 你好",
+			expected:     "value with spaces, symbols!@#$%, and unicode: 你好",
+			description:  "Should handle special characters and unicode in environment values",
+		},
+		{
+			name:         "handles special characters in default value",
+			key:          "NONEXISTENT_SPECIAL",
+			defaultValue: "default with spaces, symbols!@#$%, and unicode: 你好",
+			envValue:     "",
+			expected:     "default with spaces, symbols!@#$%, and unicode: 你好",
+			description:  "Should handle special characters and unicode in default values",
+		},
+		{
+			name:         "handles very long environment value",
+			key:          "LONG_VAR",
+			defaultValue: "short_default",
+			envValue:     strings.Repeat("a", 1000),
+			expected:     strings.Repeat("a", 1000),
+			description:  "Should handle very long environment variable values",
+		},
+		{
+			name:         "handles very long default value",
+			key:          "NONEXISTENT_LONG",
+			defaultValue: strings.Repeat("b", 1000),
+			envValue:     "",
+			expected:     strings.Repeat("b", 1000),
+			description:  "Should handle very long default values",
+		},
+		{
+			name:         "handles whitespace in environment value",
+			key:          "WHITESPACE_VAR",
+			defaultValue: "default",
+			envValue:     "  value with leading and trailing spaces  ",
+			expected:     "  value with leading and trailing spaces  ",
+			description:  "Should preserve whitespace in environment variable values",
+		},
+		{
+			name:         "handles newlines in environment value",
+			key:          "NEWLINE_VAR",
+			defaultValue: "default",
+			envValue:     "line1\nline2\nline3",
+			expected:     "line1\nline2\nline3",
+			description:  "Should handle newlines in environment variable values",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Clean up environment variable
+			defer os.Unsetenv(tt.key)
+
 			// Set up environment variable if needed
 			if tt.envValue != "" {
 				os.Setenv(tt.key, tt.envValue)
-				defer os.Unsetenv(tt.key)
 			}
 
 			result := GetEnvVar(tt.key, tt.defaultValue)
 			if result != tt.expected {
-				t.Errorf("GetEnvVar(%s, %s) = %s, want %s", tt.key, tt.defaultValue, result, tt.expected)
+				t.Errorf("GetEnvVar(%s, %s) = %s, want %s\nDescription: %s",
+					tt.key, tt.defaultValue, result, tt.expected, tt.description)
+			}
+		})
+	}
+}
+
+// TestLoadEnvConfigErrorHandling tests error scenarios for LoadEnvConfig
+func TestLoadEnvConfigErrorHandling(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(t *testing.T) (cleanup func())
+		expectError   bool
+		errorContains string
+		description   string
+	}{
+		{
+			name: "handles malformed .env file with error",
+			setupFunc: func(t *testing.T) func() {
+				// Create a malformed .env file that godotenv will reject
+				content := "MALFORMED_LINE_WITHOUT_EQUALS\nVALID_VAR=valid_value\n"
+				err := os.WriteFile(".env", []byte(content), 0644)
+				if err != nil {
+					t.Fatalf("Failed to create test .env file: %v", err)
+				}
+				return func() { os.Remove(".env") }
+			},
+			expectError:   true,
+			errorContains: "unexpected character",
+			description:   "Should return error for malformed .env files",
+		},
+		{
+			name: "handles .env file with invalid UTF-8 with error",
+			setupFunc: func(t *testing.T) func() {
+				// Create a file with invalid UTF-8 bytes that will cause parsing issues
+				invalidUTF8 := []byte{0xff, 0xfe, 0xfd}
+				content := append([]byte("VALID_VAR=value\n"), invalidUTF8...)
+				content = append(content, []byte("\nANOTHER_VAR=another_value\n")...)
+				err := os.WriteFile(".env", content, 0644)
+				if err != nil {
+					t.Fatalf("Failed to create test .env file: %v", err)
+				}
+				return func() { os.Remove(".env") }
+			},
+			expectError:   true,
+			errorContains: "unexpected character",
+			description:   "Should return error for .env files with invalid UTF-8 sequences",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setupFunc(t)
+			defer cleanup()
+
+			err := LoadEnvConfig()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("LoadEnvConfig() expected error but got nil. %s", tt.description)
+					return
+				}
+				if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("LoadEnvConfig() error = %v, want error containing %s. %s",
+						err, tt.errorContains, tt.description)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("LoadEnvConfig() unexpected error: %v. %s", err, tt.description)
+				}
+			}
+		})
+	}
+}
+
+// TestLoadEnvConfigFileSystemScenarios tests various file system scenarios
+func TestLoadEnvConfigFileSystemScenarios(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFunc   func(t *testing.T) (cleanup func())
+		expectError bool
+		description string
+	}{
+		{
+			name: "handles directory named .env",
+			setupFunc: func(t *testing.T) func() {
+				// Create a directory named .env instead of a file
+				err := os.Mkdir(".env", 0755)
+				if err != nil {
+					t.Fatalf("Failed to create .env directory: %v", err)
+				}
+				return func() { os.RemoveAll(".env") }
+			},
+			expectError: true, // Should error when trying to read a directory as a file
+			description: "Should handle the case where .env is a directory, not a file",
+		},
+		{
+			name: "handles very large .env file",
+			setupFunc: func(t *testing.T) func() {
+				// Create a large .env file
+				var content strings.Builder
+				for i := 0; i < 1000; i++ {
+					content.WriteString(fmt.Sprintf("VAR_%d=value_%d\n", i, i))
+				}
+				err := os.WriteFile(".env", []byte(content.String()), 0644)
+				if err != nil {
+					t.Fatalf("Failed to create large .env file: %v", err)
+				}
+				return func() { os.Remove(".env") }
+			},
+			expectError: false,
+			description: "Should handle very large .env files",
+		},
+		{
+			name: "handles .env file in subdirectory scenario",
+			setupFunc: func(t *testing.T) func() {
+				// Create a subdirectory and test from there
+				err := os.Mkdir("testdir", 0755)
+				if err != nil {
+					t.Fatalf("Failed to create test directory: %v", err)
+				}
+
+				// Create .env in parent (current) directory
+				err = os.WriteFile(".env", []byte("PARENT_VAR=parent_value\n"), 0644)
+				if err != nil {
+					t.Fatalf("Failed to create .env file: %v", err)
+				}
+
+				// Change to subdirectory
+				originalDir, _ := os.Getwd()
+				err = os.Chdir("testdir")
+				if err != nil {
+					t.Fatalf("Failed to change to test directory: %v", err)
+				}
+
+				return func() {
+					os.Chdir(originalDir)
+					os.RemoveAll("testdir")
+					os.Remove(".env")
+				}
+			},
+			expectError: false,
+			description: "Should find .env file in parent directory when run from subdirectory",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setupFunc(t)
+			defer cleanup()
+
+			err := LoadEnvConfig()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("LoadEnvConfig() expected error but got nil. %s", tt.description)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("LoadEnvConfig() unexpected error: %v. %s", err, tt.description)
+				}
+			}
+		})
+	}
+}
+
+// TestGetEnvVarEdgeCases tests edge cases for GetEnvVar function
+func TestGetEnvVarEdgeCases(t *testing.T) {
+	tests := []struct {
+		name         string
+		key          string
+		defaultValue string
+		setupFunc    func()
+		cleanupFunc  func()
+		expected     string
+		description  string
+	}{
+		{
+			name:         "handles empty key",
+			key:          "",
+			defaultValue: "default",
+			setupFunc:    func() {},
+			cleanupFunc:  func() {},
+			expected:     "default",
+			description:  "Should return default when key is empty string",
+		},
+		{
+			name:         "handles key with special characters",
+			key:          "KEY_WITH_SPECIAL_CHARS!@#$%",
+			defaultValue: "default",
+			setupFunc: func() {
+				os.Setenv("KEY_WITH_SPECIAL_CHARS!@#$%", "special_value")
+			},
+			cleanupFunc: func() {
+				os.Unsetenv("KEY_WITH_SPECIAL_CHARS!@#$%")
+			},
+			expected:    "special_value",
+			description: "Should handle environment variable keys with special characters",
+		},
+		{
+			name:         "handles environment variable set to space",
+			key:          "SPACE_VAR",
+			defaultValue: "default",
+			setupFunc: func() {
+				os.Setenv("SPACE_VAR", " ")
+			},
+			cleanupFunc: func() {
+				os.Unsetenv("SPACE_VAR")
+			},
+			expected:    " ",
+			description: "Should return single space when environment variable is set to space",
+		},
+		{
+			name:         "handles environment variable set to zero",
+			key:          "ZERO_VAR",
+			defaultValue: "default",
+			setupFunc: func() {
+				os.Setenv("ZERO_VAR", "0")
+			},
+			cleanupFunc: func() {
+				os.Unsetenv("ZERO_VAR")
+			},
+			expected:    "0",
+			description: "Should return '0' when environment variable is set to zero",
+		},
+		{
+			name:         "handles environment variable set to false",
+			key:          "FALSE_VAR",
+			defaultValue: "default",
+			setupFunc: func() {
+				os.Setenv("FALSE_VAR", "false")
+			},
+			cleanupFunc: func() {
+				os.Unsetenv("FALSE_VAR")
+			},
+			expected:    "false",
+			description: "Should return 'false' when environment variable is set to false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFunc()
+			defer tt.cleanupFunc()
+
+			result := GetEnvVar(tt.key, tt.defaultValue)
+			if result != tt.expected {
+				t.Errorf("GetEnvVar(%s, %s) = %s, want %s. %s",
+					tt.key, tt.defaultValue, result, tt.expected, tt.description)
 			}
 		})
 	}
