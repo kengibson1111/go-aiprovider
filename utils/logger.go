@@ -29,3 +29,8 @@ func (l *Logger) Error(msg string, args ...interface{}) {
 func (l *Logger) Warn(msg string, args ...interface{}) {
 	log.Printf("[%s] WARN: %s", l.prefix, fmt.Sprintf(msg, args...))
 }
+
+// Debug logs a debug message
+func (l *Logger) Debug(msg string, args ...interface{}) {
+	log.Printf("[%s] DEBUG: %s", l.prefix, fmt.Sprintf(msg, args...))
+}
