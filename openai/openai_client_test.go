@@ -283,7 +283,7 @@ func TestOpenAIClient_GenerateCompletion(t *testing.T) {
 			statusCode:    429,
 			responseBody:  `{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}`,
 			expectError:   true,
-			errorContains: "Rate limit exceeded",
+			errorContains: "rate limit exceeded",
 		},
 		{
 			name:       "empty response",
@@ -445,7 +445,7 @@ func TestOpenAIClient_GenerateCode(t *testing.T) {
 			statusCode:    429,
 			responseBody:  `{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}`,
 			expectError:   true,
-			errorContains: "Rate limit exceeded",
+			errorContains: "rate limit exceeded",
 		},
 	}
 
@@ -754,7 +754,7 @@ func TestOpenAIClient_RateLimitHandling(t *testing.T) {
 		t.Errorf("Should handle rate limit gracefully, got error: %v", err)
 	}
 
-	if !strings.Contains(resp.Error, "Rate limit exceeded") {
+	if !strings.Contains(resp.Error, "rate limit exceeded") {
 		t.Errorf("Expected rate limit error message, got: %s", resp.Error)
 	}
 

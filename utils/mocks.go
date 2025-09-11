@@ -132,6 +132,8 @@ func (m *MockHTTPClient) SetResponse(method, url string, statusCode int, body st
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	key := method + " " + url
+	// Clear any existing error for this key when setting a response
+	delete(m.errors, key)
 	m.responses[key] = &http.Response{
 		StatusCode: statusCode,
 		Body:       io.NopCloser(strings.NewReader(body)),
