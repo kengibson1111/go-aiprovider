@@ -476,3 +476,141 @@ func TestValidateEndpointURL(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateClaudeConfig(t *testing.T) {
+	tests := []struct {
+		name             string
+		testConfig       *TestConfig
+		expectedBaseURL  string
+		expectedProvider string
+	}{
+		{
+			name: "uses default endpoint when custom endpoint is empty",
+			testConfig: &TestConfig{
+				ClaudeAPIKey:      "test-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "",
+			},
+			expectedBaseURL:  "https://api.anthropic.com",
+			expectedProvider: "claude",
+		},
+		{
+			name: "uses custom endpoint when valid",
+			testConfig: &TestConfig{
+				ClaudeAPIKey:      "test-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "https://custom-claude.example.com",
+			},
+			expectedBaseURL:  "https://custom-claude.example.com",
+			expectedProvider: "claude",
+		},
+		{
+			name: "falls back to default when custom endpoint is invalid",
+			testConfig: &TestConfig{
+				ClaudeAPIKey:      "test-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "invalid-url",
+			},
+			expectedBaseURL:  "https://api.anthropic.com",
+			expectedProvider: "claude",
+		},
+		{
+			name: "falls back to default when custom endpoint has query parameters",
+			testConfig: &TestConfig{
+				ClaudeAPIKey:      "test-key",
+				ClaudeModel:       "claude-3-sonnet-20240229",
+				ClaudeAPIEndpoint: "https://api.example.com?param=value",
+			},
+			expectedBaseURL:  "https://api.anthropic.com",
+			expectedProvider: "claude",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := tt.testConfig.CreateClaudeConfig()
+
+			if config.BaseURL != tt.expectedBaseURL {
+				t.Errorf("CreateClaudeConfig() BaseURL = %s, want %s", config.BaseURL, tt.expectedBaseURL)
+			}
+			if config.Provider != tt.expectedProvider {
+				t.Errorf("CreateClaudeConfig() Provider = %s, want %s", config.Provider, tt.expectedProvider)
+			}
+			if config.APIKey != tt.testConfig.ClaudeAPIKey {
+				t.Errorf("CreateClaudeConfig() APIKey = %s, want %s", config.APIKey, tt.testConfig.ClaudeAPIKey)
+			}
+			if config.Model != tt.testConfig.ClaudeModel {
+				t.Errorf("CreateClaudeConfig() Model = %s, want %s", config.Model, tt.testConfig.ClaudeModel)
+			}
+		})
+	}
+}
+
+func TestCreateOpenAIConfig(t *testing.T) {
+	tests := []struct {
+		name             string
+		testConfig       *TestConfig
+		expectedBaseURL  string
+		expectedProvider string
+	}{
+		{
+			name: "uses default endpoint when custom endpoint is empty",
+			testConfig: &TestConfig{
+				OpenAIAPIKey:      "test-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "",
+			},
+			expectedBaseURL:  "https://api.openai.com",
+			expectedProvider: "openai",
+		},
+		{
+			name: "uses custom endpoint when valid",
+			testConfig: &TestConfig{
+				OpenAIAPIKey:      "test-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "https://custom-openai.example.com",
+			},
+			expectedBaseURL:  "https://custom-openai.example.com",
+			expectedProvider: "openai",
+		},
+		{
+			name: "falls back to default when custom endpoint is invalid",
+			testConfig: &TestConfig{
+				OpenAIAPIKey:      "test-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "invalid-url",
+			},
+			expectedBaseURL:  "https://api.openai.com",
+			expectedProvider: "openai",
+		},
+		{
+			name: "falls back to default when custom endpoint has query parameters",
+			testConfig: &TestConfig{
+				OpenAIAPIKey:      "test-key",
+				OpenAIModel:       "gpt-3.5-turbo",
+				OpenAIAPIEndpoint: "https://api.example.com?param=value",
+			},
+			expectedBaseURL:  "https://api.openai.com",
+			expectedProvider: "openai",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := tt.testConfig.CreateOpenAIConfig()
+
+			if config.BaseURL != tt.expectedBaseURL {
+				t.Errorf("CreateOpenAIConfig() BaseURL = %s, want %s", config.BaseURL, tt.expectedBaseURL)
+			}
+			if config.Provider != tt.expectedProvider {
+				t.Errorf("CreateOpenAIConfig() Provider = %s, want %s", config.Provider, tt.expectedProvider)
+			}
+			if config.APIKey != tt.testConfig.OpenAIAPIKey {
+				t.Errorf("CreateOpenAIConfig() APIKey = %s, want %s", config.APIKey, tt.testConfig.OpenAIAPIKey)
+			}
+			if config.Model != tt.testConfig.OpenAIModel {
+				t.Errorf("CreateOpenAIConfig() Model = %s, want %s", config.Model, tt.testConfig.OpenAIModel)
+			}
+		})
+	}
+}
