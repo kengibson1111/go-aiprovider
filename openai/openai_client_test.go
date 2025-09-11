@@ -348,7 +348,7 @@ func TestOpenAIClient_GenerateCompletion(t *testing.T) {
 				Code:     "console.",
 				Cursor:   8,
 				Language: "javascript",
-				Context: utils.CodeContext{
+				Context: types.CodeContext{
 					CurrentFunction: "testFunction",
 					Imports:         []string{"import fs from 'fs'"},
 					ProjectType:     "Node.js",
@@ -472,7 +472,7 @@ func TestOpenAIClient_GenerateCode(t *testing.T) {
 			req := types.CodeGenerationRequest{
 				Prompt:   "Create a hello world function",
 				Language: "javascript",
-				Context: utils.CodeContext{
+				Context: types.CodeContext{
 					CurrentFunction: "",
 					Imports:         []string{},
 					ProjectType:     "Node.js",
@@ -527,7 +527,7 @@ func TestOpenAIClient_PromptBuilding(t *testing.T) {
 			Code:     "console.log('Hello'); console.",
 			Cursor:   30, // Position at the end of the string
 			Language: "javascript",
-			Context: utils.CodeContext{
+			Context: types.CodeContext{
 				CurrentFunction: "main",
 				Imports:         []string{"import fs from 'fs'", "import path from 'path'"},
 				ProjectType:     "Node.js",
@@ -560,7 +560,7 @@ func TestOpenAIClient_PromptBuilding(t *testing.T) {
 		req := types.CodeGenerationRequest{
 			Prompt:   "Create a function that reads a file",
 			Language: "javascript",
-			Context: utils.CodeContext{
+			Context: types.CodeContext{
 				CurrentFunction: "readFile",
 				Imports:         []string{"import fs from 'fs'"},
 				ProjectType:     "Node.js",
@@ -705,7 +705,7 @@ func TestOpenAIClient_NetworkTimeout(t *testing.T) {
 		Code:     "console.",
 		Cursor:   8,
 		Language: "javascript",
-		Context:  utils.CodeContext{},
+		Context:  types.CodeContext{},
 	}
 
 	ctx := context.Background()
@@ -744,7 +744,7 @@ func TestOpenAIClient_RateLimitHandling(t *testing.T) {
 		Code:     "console.",
 		Cursor:   8,
 		Language: "javascript",
-		Context:  utils.CodeContext{},
+		Context:  types.CodeContext{},
 	}
 
 	ctx := context.Background()
@@ -825,7 +825,7 @@ func TestOpenAIClient_GenerateCompletion_Integration(t *testing.T) {
 		Code:     "console.",
 		Cursor:   8,
 		Language: "javascript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			CurrentFunction: "testFunction",
 			Imports:         []string{"import fs from 'fs'"},
 			ProjectType:     "Node.js",
@@ -886,7 +886,7 @@ func TestOpenAIClient_GenerateCode_Integration(t *testing.T) {
 	req := types.CodeGenerationRequest{
 		Prompt:   "Create a simple JavaScript function that adds two numbers",
 		Language: "javascript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			CurrentFunction: "",
 			Imports:         []string{},
 			ProjectType:     "Node.js",

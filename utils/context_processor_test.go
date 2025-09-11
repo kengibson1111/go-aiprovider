@@ -2,6 +2,8 @@ package utils
 
 import (
 	"testing"
+
+	"github.com/kengibson1111/go-aiprovider/types"
 )
 
 func TestContextProcessorLogic(t *testing.T) {
@@ -348,7 +350,7 @@ func TestLimitContextSize(t *testing.T) {
 	cp := NewContextProcessor()
 
 	// Create a context with large data
-	context := CodeContext{
+	context := types.CodeContext{
 		CurrentFunction: "veryLongFunctionNameThatExceedsLimits",
 		ProjectType:     "React",
 		Imports: []string{

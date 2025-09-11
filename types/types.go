@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/kengibson1111/go-aiprovider/utils"
-)
-
 // ErrorResponse represents a structured error response
 type ErrorResponse struct {
 	Code    string `json:"code"`
@@ -24,10 +20,10 @@ type AIConfig struct {
 
 // CompletionRequest represents a code completion request
 type CompletionRequest struct {
-	Code     string            `json:"code"`
-	Cursor   int               `json:"cursor"`
-	Language string            `json:"language"`
-	Context  utils.CodeContext `json:"context"`
+	Code     string      `json:"code"`
+	Cursor   int         `json:"cursor"`
+	Language string      `json:"language"`
+	Context  CodeContext `json:"context"`
 }
 
 // CompletionResponse represents a code completion response
@@ -39,13 +35,66 @@ type CompletionResponse struct {
 
 // CodeGenerationRequest represents a manual code generation request
 type CodeGenerationRequest struct {
-	Prompt   string            `json:"prompt"`
-	Context  utils.CodeContext `json:"context"`
-	Language string            `json:"language"`
+	Prompt   string      `json:"prompt"`
+	Context  CodeContext `json:"context"`
+	Language string      `json:"language"`
 }
 
 // CodeGenerationResponse represents a code generation response
 type CodeGenerationResponse struct {
 	Code  string `json:"code"`
 	Error string `json:"error,omitempty"`
+}
+
+// CodeContext represents the code context for AI requests
+type CodeContext struct {
+	CurrentFunction string         `json:"currentFunction"`
+	Imports         []string       `json:"imports"`
+	ProjectType     string         `json:"projectType"`
+	RecentChanges   []string       `json:"recentChanges"`
+	StyleAnalysis   *StyleAnalysis `json:"styleAnalysis,omitempty"`
+}
+
+// StyleAnalysis represents code style preferences
+type StyleAnalysis struct {
+	Indentation IndentationStyle  `json:"indentation"`
+	Naming      NamingConventions `json:"naming"`
+	Linting     LintingConfig     `json:"linting"`
+	TypeScript  TypeScriptInfo    `json:"typescript"`
+}
+
+// IndentationStyle represents indentation preferences
+type IndentationStyle struct {
+	Type       string  `json:"type"` // "spaces", "tabs", "mixed"
+	Size       int     `json:"size"`
+	Confidence float64 `json:"confidence"`
+}
+
+// NamingConventions represents naming convention preferences
+type NamingConventions struct {
+	Variables  string  `json:"variables"` // "camelCase", "snake_case", "PascalCase", "mixed"
+	Functions  string  `json:"functions"`
+	Classes    string  `json:"classes"`
+	Constants  string  `json:"constants"`  // "UPPER_CASE", "camelCase", "PascalCase", "mixed"
+	Interfaces string  `json:"interfaces"` // "PascalCase", "IPascalCase", "mixed"
+	Types      string  `json:"types"`
+	Confidence float64 `json:"confidence"`
+}
+
+// LintingConfig represents linting configuration
+type LintingConfig struct {
+	HasESLint      bool                   `json:"hasESLint"`
+	HasPrettier    bool                   `json:"hasPrettier"`
+	ESLintRules    map[string]interface{} `json:"eslintRules,omitempty"`
+	PrettierConfig map[string]interface{} `json:"prettierConfig,omitempty"`
+	ConfigFiles    []string               `json:"configFiles"`
+}
+
+// TypeScriptInfo represents TypeScript project information
+type TypeScriptInfo struct {
+	IsTypeScriptProject bool                   `json:"isTypeScriptProject"`
+	HasStrictMode       bool                   `json:"hasStrictMode"`
+	UsesTypeAnnotations bool                   `json:"usesTypeAnnotations"`
+	CompilerOptions     map[string]interface{} `json:"compilerOptions,omitempty"`
+	ConfigFile          string                 `json:"configFile,omitempty"`
 }

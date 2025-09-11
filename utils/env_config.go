@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/kengibson1111/go-aiprovider/types"
 )
 
 // Environment variable names for API configuration
@@ -139,4 +140,44 @@ func CanRunOpenAIIntegrationTests() bool {
 // Returns true if at least one API key is available
 func CanRunIntegrationTests() bool {
 	return CanRunClaudeIntegrationTests() || CanRunOpenAIIntegrationTests()
+}
+
+// CreateClaudeConfig creates an AIConfig for Claude from TestConfig
+// Uses ClaudeAPIEndpoint if valid, otherwise falls back to default endpoint
+func (tc *TestConfig) CreateClaudeConfig() *types.AIConfig {
+	baseURL := "https://api.anthropic.com"
+
+	// Use custom endpoint if it's valid
+	if tc.ClaudeAPIEndpoint != "" && validateEndpointURL(tc.ClaudeAPIEndpoint) == nil {
+		baseURL = tc.ClaudeAPIEndpoint
+	}
+
+	return &types.AIConfig{
+		Provider:    "claude",
+		APIKey:      tc.ClaudeAPIKey,
+		BaseURL:     baseURL,
+		Model:       tc.ClaudeModel,
+		MaxTokens:   4096,
+		Temperature: 0.7,
+	}
+}
+
+// CreateOpenAIConfig creates an AIConfig for OpenAI from TestConfig
+// Uses OpenAIAPIEndpoint if valid, otherwise falls back to default endpoint
+func (tc *TestConfig) CreateOpenAIConfig() *types.AIConfig {
+	baseURL := "https://api.openai.com"
+
+	// Use custom endpoint if it's valid
+	if tc.OpenAIAPIEndpoint != "" && validateEndpointURL(tc.OpenAIAPIEndpoint) == nil {
+		baseURL = tc.OpenAIAPIEndpoint
+	}
+
+	return &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      tc.OpenAIAPIKey,
+		BaseURL:     baseURL,
+		Model:       tc.OpenAIModel,
+		MaxTokens:   4096,
+		Temperature: 0.7,
+	}
 }

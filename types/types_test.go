@@ -3,8 +3,6 @@ package types
 import (
 	"encoding/json"
 	"testing"
-
-	"github.com/kengibson1111/go-aiprovider/utils"
 )
 
 // TestErrorResponse tests the ErrorResponse struct
@@ -162,7 +160,7 @@ func TestAIConfig(t *testing.T) {
 // TestCompletionRequest tests the CompletionRequest struct
 func TestCompletionRequest(t *testing.T) {
 	t.Run("JSON serialization", func(t *testing.T) {
-		context := utils.CodeContext{
+		context := CodeContext{
 			CurrentFunction: "handleRequest",
 			Imports:         []string{"import React from 'react'", "import axios from 'axios'"},
 			ProjectType:     "React",
@@ -236,7 +234,7 @@ func TestCompletionRequest(t *testing.T) {
 			Code:     "console.log('hello');",
 			Cursor:   0,
 			Language: "javascript",
-			Context:  utils.CodeContext{},
+			Context:  CodeContext{},
 		}
 
 		data, err := json.Marshal(request)
@@ -374,7 +372,7 @@ func TestCompletionResponse(t *testing.T) {
 // TestCodeGenerationRequest tests the CodeGenerationRequest struct
 func TestCodeGenerationRequest(t *testing.T) {
 	t.Run("JSON serialization", func(t *testing.T) {
-		context := utils.CodeContext{
+		context := CodeContext{
 			CurrentFunction: "processData",
 			Imports:         []string{"import pandas as pd", "import numpy as np"},
 			ProjectType:     "Python",
@@ -441,7 +439,7 @@ func TestCodeGenerationRequest(t *testing.T) {
 	t.Run("Empty prompt", func(t *testing.T) {
 		request := CodeGenerationRequest{
 			Prompt:   "",
-			Context:  utils.CodeContext{},
+			Context:  CodeContext{},
 			Language: "javascript",
 		}
 
@@ -461,7 +459,7 @@ func TestCodeGenerationRequest(t *testing.T) {
 	})
 
 	t.Run("Complex context", func(t *testing.T) {
-		context := utils.CodeContext{
+		context := CodeContext{
 			CurrentFunction: "complexFunction",
 			Imports:         []string{"import React, { useState, useEffect } from 'react'", "import axios from 'axios'"},
 			ProjectType:     "React",

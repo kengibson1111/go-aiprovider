@@ -85,7 +85,7 @@ func TestBuildCompletionPrompt(t *testing.T) {
 		Code:     "function hello() {\n  console.log('Hello');\n}",
 		Cursor:   25,
 		Language: "typescript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			CurrentFunction: "hello",
 			Imports:         []string{"import React from 'react'"},
 			ProjectType:     "React",
@@ -122,7 +122,7 @@ func TestBuildCodeGenerationPrompt(t *testing.T) {
 	req := types.CodeGenerationRequest{
 		Prompt:   "Create a function that adds two numbers",
 		Language: "typescript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			CurrentFunction: "calculator",
 			Imports:         []string{"import { Calculator } from './types'"},
 			ProjectType:     "Node.js",
@@ -354,7 +354,7 @@ func TestClaudeIntegration_GenerateCompletion(t *testing.T) {
 		Code:     "function greet(name) {\n  console.log('Hello, ' + ",
 		Cursor:   42, // Position after the +
 		Language: "javascript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			CurrentFunction: "greet",
 			ProjectType:     "Node.js",
 		},
@@ -414,7 +414,7 @@ func TestClaudeIntegration_GenerateCode(t *testing.T) {
 	req := types.CodeGenerationRequest{
 		Prompt:   "Create a simple function that adds two numbers and returns the result",
 		Language: "javascript",
-		Context: utils.CodeContext{
+		Context: types.CodeContext{
 			ProjectType: "Node.js",
 		},
 	}

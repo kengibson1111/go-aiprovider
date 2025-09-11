@@ -3,64 +3,13 @@ package utils
 import (
 	"regexp"
 	"strings"
+
+	"github.com/kengibson1111/go-aiprovider/types"
 )
 
 // ContextProcessor handles code context extraction and analysis
 type ContextProcessor struct {
 	logger *Logger
-}
-
-// CodeContext represents the code context for AI requests
-type CodeContext struct {
-	CurrentFunction string         `json:"currentFunction"`
-	Imports         []string       `json:"imports"`
-	ProjectType     string         `json:"projectType"`
-	RecentChanges   []string       `json:"recentChanges"`
-	StyleAnalysis   *StyleAnalysis `json:"styleAnalysis,omitempty"`
-}
-
-// StyleAnalysis represents code style preferences
-type StyleAnalysis struct {
-	Indentation IndentationStyle  `json:"indentation"`
-	Naming      NamingConventions `json:"naming"`
-	Linting     LintingConfig     `json:"linting"`
-	TypeScript  TypeScriptInfo    `json:"typescript"`
-}
-
-// IndentationStyle represents indentation preferences
-type IndentationStyle struct {
-	Type       string  `json:"type"` // "spaces", "tabs", "mixed"
-	Size       int     `json:"size"`
-	Confidence float64 `json:"confidence"`
-}
-
-// NamingConventions represents naming convention preferences
-type NamingConventions struct {
-	Variables  string  `json:"variables"` // "camelCase", "snake_case", "PascalCase", "mixed"
-	Functions  string  `json:"functions"`
-	Classes    string  `json:"classes"`
-	Constants  string  `json:"constants"`  // "UPPER_CASE", "camelCase", "PascalCase", "mixed"
-	Interfaces string  `json:"interfaces"` // "PascalCase", "IPascalCase", "mixed"
-	Types      string  `json:"types"`
-	Confidence float64 `json:"confidence"`
-}
-
-// LintingConfig represents linting configuration
-type LintingConfig struct {
-	HasESLint      bool                   `json:"hasESLint"`
-	HasPrettier    bool                   `json:"hasPrettier"`
-	ESLintRules    map[string]interface{} `json:"eslintRules,omitempty"`
-	PrettierConfig map[string]interface{} `json:"prettierConfig,omitempty"`
-	ConfigFiles    []string               `json:"configFiles"`
-}
-
-// TypeScriptInfo represents TypeScript project information
-type TypeScriptInfo struct {
-	IsTypeScriptProject bool                   `json:"isTypeScriptProject"`
-	HasStrictMode       bool                   `json:"hasStrictMode"`
-	UsesTypeAnnotations bool                   `json:"usesTypeAnnotations"`
-	CompilerOptions     map[string]interface{} `json:"compilerOptions,omitempty"`
-	ConfigFile          string                 `json:"configFile,omitempty"`
 }
 
 // NewContextProcessor creates a new context processor
@@ -71,10 +20,10 @@ func NewContextProcessor() *ContextProcessor {
 }
 
 // ProcessContext extracts and processes code context for AI requests
-func (cp *ContextProcessor) ProcessContext(code string, cursor int, language string) CodeContext {
+func (cp *ContextProcessor) ProcessContext(code string, cursor int, language string) types.CodeContext {
 	cp.logger.Info("Processing context for language: %s, cursor: %d", language, cursor)
 
-	context := CodeContext{
+	context := types.CodeContext{
 		Imports:       cp.extractImports(code, language),
 		ProjectType:   cp.detectProjectType(code, language),
 		RecentChanges: []string{}, // Will be populated by extension
@@ -90,7 +39,7 @@ func (cp *ContextProcessor) ProcessContext(code string, cursor int, language str
 }
 
 // ProcessContextWithStyle processes context and applies style-aware enhancements
-func (cp *ContextProcessor) ProcessContextWithStyle(context CodeContext, code string, language string) CodeContext {
+func (cp *ContextProcessor) ProcessContextWithStyle(context types.CodeContext, code string, language string) types.CodeContext {
 	cp.logger.Info("Processing context with style analysis for language: %s", language)
 
 	// If style analysis is provided, use it to enhance context processing
@@ -112,7 +61,7 @@ func (cp *ContextProcessor) ProcessContextWithStyle(context CodeContext, code st
 }
 
 // formatImportsWithStyle formats import statements according to detected style preferences
-func (cp *ContextProcessor) formatImportsWithStyle(imports []string, style *StyleAnalysis, language string) []string {
+func (cp *ContextProcessor) formatImportsWithStyle(imports []string, style *types.StyleAnalysis, language string) []string {
 	if style == nil || len(imports) == 0 {
 		return imports
 	}
@@ -143,7 +92,7 @@ func (cp *ContextProcessor) formatImportsWithStyle(imports []string, style *Styl
 }
 
 // formatFunctionWithStyle formats function context according to style preferences
-func (cp *ContextProcessor) formatFunctionWithStyle(function string, style *StyleAnalysis, language string) string {
+func (cp *ContextProcessor) formatFunctionWithStyle(function string, style *types.StyleAnalysis, language string) string {
 	if style == nil || function == "" {
 		return function
 	}
@@ -164,7 +113,7 @@ func (cp *ContextProcessor) formatFunctionWithStyle(function string, style *Styl
 }
 
 // enhanceProjectTypeWithStyle enhances project type detection with style information
-func (cp *ContextProcessor) enhanceProjectTypeWithStyle(projectType string, style *StyleAnalysis, language string) string {
+func (cp *ContextProcessor) enhanceProjectTypeWithStyle(projectType string, style *types.StyleAnalysis, language string) string {
 	if style == nil {
 		return projectType
 	}
@@ -567,7 +516,7 @@ func (cp *ContextProcessor) detectProjectType(code, language string) string {
 }
 
 // LimitContextSize ensures context doesn't exceed API token limits
-func (cp *ContextProcessor) LimitContextSize(context CodeContext, maxTokens int) CodeContext {
+func (cp *ContextProcessor) LimitContextSize(context types.CodeContext, maxTokens int) types.CodeContext {
 	// Rough estimation: 1 token ≈ 4 characters
 	maxChars := maxTokens * 4
 
@@ -609,7 +558,7 @@ func (cp *ContextProcessor) LimitContextSize(context CodeContext, maxTokens int)
 }
 
 // estimateContextSize estimates the size of context in characters
-func (cp *ContextProcessor) estimateContextSize(context CodeContext) int {
+func (cp *ContextProcessor) estimateContextSize(context types.CodeContext) int {
 	size := len(context.CurrentFunction) + len(context.ProjectType)
 
 	for _, imp := range context.Imports {
