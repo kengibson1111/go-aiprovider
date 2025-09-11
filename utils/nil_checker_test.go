@@ -11,7 +11,7 @@ func TestCheckNilValue(t *testing.T) {
 	tests := []struct {
 		name        string
 		valueName   string
-		value       interface{}
+		value       any
 		required    bool
 		expectError bool
 		errorMsg    string
@@ -131,7 +131,7 @@ func TestCheckNilValueWithDifferentTypes(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		value    interface{}
+		value    any
 		required bool
 		isNil    bool
 	}{
@@ -348,7 +348,7 @@ func TestCheckNilValueWithArrays(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		value    interface{}
+		value    any
 		required bool
 		isNil    bool
 	}{
@@ -522,8 +522,8 @@ func TestCheckArrayValueWithDifferentTypes(t *testing.T) {
 		{"empty int slice", []int{}, true, true},
 		{"byte slice", []byte("hello"), true, false},
 		{"empty byte slice", []byte{}, true, true},
-		{"interface slice", []interface{}{1, "hello", true}, true, false},
-		{"empty interface slice", []interface{}{}, true, true},
+		{"interface slice", []any{1, "hello", true}, true, false},
+		{"empty interface slice", []any{}, true, true},
 		{"string array", [3]string{"a", "b", "c"}, true, false},
 		{"int array", [2]int{1, 2}, true, false},
 		{"empty string array", [0]string{}, true, true},

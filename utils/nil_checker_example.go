@@ -271,7 +271,7 @@ func ProcessMultiTypeArrays(
 	stringSlice []string,
 	intSlice []int,
 	byteSlice []byte,
-	interfaceSlice []interface{},
+	interfaceSlice []any,
 	logger *Logger,
 ) error {
 	// Check all different types of arrays/slices

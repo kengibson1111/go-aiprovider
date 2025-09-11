@@ -373,11 +373,11 @@ func (m *MockNetworkMonitor) StopMonitoring() {
 }
 
 // GetNetworkInfo returns mock network information
-func (m *MockNetworkMonitor) GetNetworkInfo() map[string]interface{} {
+func (m *MockNetworkMonitor) GetNetworkInfo() map[string]any {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return map[string]interface{}{
+	return map[string]any{
 		"status":       m.status.String(),
 		"lastCheck":    m.lastCheck.Format(time.RFC3339),
 		"timeout":      m.timeout.String(),

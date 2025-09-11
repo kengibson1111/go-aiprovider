@@ -203,7 +203,7 @@ func (cp *ContextProcessor) normalizeSpaceIndentation(text string, spaceSize int
 }
 
 // applyPrettierStyle applies Prettier formatting preferences
-func (cp *ContextProcessor) applyPrettierStyle(text string, prettierConfig map[string]interface{}, language string) string {
+func (cp *ContextProcessor) applyPrettierStyle(text string, prettierConfig map[string]any, language string) string {
 	if prettierConfig == nil {
 		return text
 	}

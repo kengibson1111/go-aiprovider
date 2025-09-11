@@ -77,11 +77,27 @@ func TestLoadEnvConfig(t *testing.T) {
 
 			// Set up test .env file if needed
 			if tt.setupEnvFile {
+				// Backup existing .env file if it exists
+				var originalContent []byte
+				var hadOriginalFile bool
+				if content, err := os.ReadFile(tt.envFileName); err == nil {
+					originalContent = content
+					hadOriginalFile = true
+				}
+
 				err := os.WriteFile(tt.envFileName, []byte(tt.envFileContent), 0644)
 				if err != nil {
 					t.Fatalf("Failed to create test .env file: %v", err)
 				}
-				defer os.Remove(tt.envFileName)
+
+				// Restore original file or remove test file
+				defer func() {
+					if hadOriginalFile {
+						os.WriteFile(tt.envFileName, originalContent, 0644)
+					} else {
+						os.Remove(tt.envFileName)
+					}
+				}()
 			}
 
 			// Test LoadEnvConfig
@@ -235,13 +251,27 @@ func TestLoadEnvConfigErrorHandling(t *testing.T) {
 		{
 			name: "handles malformed .env file with error",
 			setupFunc: func(t *testing.T) func() {
+				// Backup existing .env file if it exists
+				var originalContent []byte
+				var hadOriginalFile bool
+				if content, err := os.ReadFile(".env"); err == nil {
+					originalContent = content
+					hadOriginalFile = true
+				}
+
 				// Create a malformed .env file that godotenv will reject
 				content := "MALFORMED_LINE_WITHOUT_EQUALS\nVALID_VAR=valid_value\n"
 				err := os.WriteFile(".env", []byte(content), 0644)
 				if err != nil {
 					t.Fatalf("Failed to create test .env file: %v", err)
 				}
-				return func() { os.Remove(".env") }
+				return func() {
+					if hadOriginalFile {
+						os.WriteFile(".env", originalContent, 0644)
+					} else {
+						os.Remove(".env")
+					}
+				}
 			},
 			expectError:   true,
 			errorContains: "unexpected character",
@@ -250,6 +280,14 @@ func TestLoadEnvConfigErrorHandling(t *testing.T) {
 		{
 			name: "handles .env file with invalid UTF-8 with error",
 			setupFunc: func(t *testing.T) func() {
+				// Backup existing .env file if it exists
+				var originalContent []byte
+				var hadOriginalFile bool
+				if content, err := os.ReadFile(".env"); err == nil {
+					originalContent = content
+					hadOriginalFile = true
+				}
+
 				// Create a file with invalid UTF-8 bytes that will cause parsing issues
 				invalidUTF8 := []byte{0xff, 0xfe, 0xfd}
 				content := append([]byte("VALID_VAR=value\n"), invalidUTF8...)
@@ -258,7 +296,13 @@ func TestLoadEnvConfigErrorHandling(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Failed to create test .env file: %v", err)
 				}
-				return func() { os.Remove(".env") }
+				return func() {
+					if hadOriginalFile {
+						os.WriteFile(".env", originalContent, 0644)
+					} else {
+						os.Remove(".env")
+					}
+				}
 			},
 			expectError:   true,
 			errorContains: "unexpected character",
@@ -315,6 +359,14 @@ func TestLoadEnvConfigFileSystemScenarios(t *testing.T) {
 		{
 			name: "handles very large .env file",
 			setupFunc: func(t *testing.T) func() {
+				// Backup existing .env file if it exists
+				var originalContent []byte
+				var hadOriginalFile bool
+				if content, err := os.ReadFile(".env"); err == nil {
+					originalContent = content
+					hadOriginalFile = true
+				}
+
 				// Create a large .env file
 				var content strings.Builder
 				for i := 0; i < 1000; i++ {
@@ -324,7 +376,13 @@ func TestLoadEnvConfigFileSystemScenarios(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Failed to create large .env file: %v", err)
 				}
-				return func() { os.Remove(".env") }
+				return func() {
+					if hadOriginalFile {
+						os.WriteFile(".env", originalContent, 0644)
+					} else {
+						os.Remove(".env")
+					}
+				}
 			},
 			expectError: false,
 			description: "Should handle very large .env files",
@@ -336,6 +394,14 @@ func TestLoadEnvConfigFileSystemScenarios(t *testing.T) {
 				err := os.Mkdir("testdir", 0755)
 				if err != nil {
 					t.Fatalf("Failed to create test directory: %v", err)
+				}
+
+				// Backup existing .env file if it exists
+				var originalContent []byte
+				var hadOriginalFile bool
+				if content, err := os.ReadFile(".env"); err == nil {
+					originalContent = content
+					hadOriginalFile = true
 				}
 
 				// Create .env in parent (current) directory
@@ -354,7 +420,11 @@ func TestLoadEnvConfigFileSystemScenarios(t *testing.T) {
 				return func() {
 					os.Chdir(originalDir)
 					os.RemoveAll("testdir")
-					os.Remove(".env")
+					if hadOriginalFile {
+						os.WriteFile(".env", originalContent, 0644)
+					} else {
+						os.Remove(".env")
+					}
 				}
 			},
 			expectError: false,
@@ -566,15 +636,76 @@ func TestLoadTestConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up environment variables
+			// Backup existing environment variables
+			originalClaudeAPIKey := os.Getenv(ClaudeAPIKeyEnv)
+			originalClaudeModel := os.Getenv(ClaudeModelEnv)
+			originalClaudeAPIEndpoint := os.Getenv(ClaudeAPIEndpointEnv)
+			originalOpenAIAPIKey := os.Getenv(OpenAIAPIKeyEnv)
+			originalOpenAIModel := os.Getenv(OpenAIModelEnv)
+			originalOpenAIAPIEndpoint := os.Getenv(OpenAIAPIEndpointEnv)
+
+			// Temporarily rename .env files to prevent them from being loaded
+			var envFileRenamed bool
+			var parentEnvFileRenamed bool
+			if _, err := os.Stat(".env"); err == nil {
+				os.Rename(".env", ".env.test_backup")
+				envFileRenamed = true
+			}
+			if _, err := os.Stat("../.env"); err == nil {
+				os.Rename("../.env", "../.env.test_backup")
+				parentEnvFileRenamed = true
+			}
+
+			// Clean up and restore environment variables and .env files
 			defer func() {
-				os.Unsetenv(ClaudeAPIKeyEnv)
-				os.Unsetenv(ClaudeModelEnv)
-				os.Unsetenv(ClaudeAPIEndpointEnv)
-				os.Unsetenv(OpenAIAPIKeyEnv)
-				os.Unsetenv(OpenAIModelEnv)
-				os.Unsetenv(OpenAIAPIEndpointEnv)
+				// Restore .env files if they were renamed
+				if envFileRenamed {
+					os.Rename(".env.test_backup", ".env")
+				}
+				if parentEnvFileRenamed {
+					os.Rename("../.env.test_backup", "../.env")
+				}
+
+				// Restore original values or unset if they were empty
+				if originalClaudeAPIKey != "" {
+					os.Setenv(ClaudeAPIKeyEnv, originalClaudeAPIKey)
+				} else {
+					os.Unsetenv(ClaudeAPIKeyEnv)
+				}
+				if originalClaudeModel != "" {
+					os.Setenv(ClaudeModelEnv, originalClaudeModel)
+				} else {
+					os.Unsetenv(ClaudeModelEnv)
+				}
+				if originalClaudeAPIEndpoint != "" {
+					os.Setenv(ClaudeAPIEndpointEnv, originalClaudeAPIEndpoint)
+				} else {
+					os.Unsetenv(ClaudeAPIEndpointEnv)
+				}
+				if originalOpenAIAPIKey != "" {
+					os.Setenv(OpenAIAPIKeyEnv, originalOpenAIAPIKey)
+				} else {
+					os.Unsetenv(OpenAIAPIKeyEnv)
+				}
+				if originalOpenAIModel != "" {
+					os.Setenv(OpenAIModelEnv, originalOpenAIModel)
+				} else {
+					os.Unsetenv(OpenAIModelEnv)
+				}
+				if originalOpenAIAPIEndpoint != "" {
+					os.Setenv(OpenAIAPIEndpointEnv, originalOpenAIAPIEndpoint)
+				} else {
+					os.Unsetenv(OpenAIAPIEndpointEnv)
+				}
 			}()
+
+			// Clear all environment variables first
+			os.Unsetenv(ClaudeAPIKeyEnv)
+			os.Unsetenv(ClaudeModelEnv)
+			os.Unsetenv(ClaudeAPIEndpointEnv)
+			os.Unsetenv(OpenAIAPIKeyEnv)
+			os.Unsetenv(OpenAIModelEnv)
+			os.Unsetenv(OpenAIAPIEndpointEnv)
 
 			// Set up test environment variables
 			if tt.claudeAPIKey != "" {
@@ -644,9 +775,43 @@ func TestCanRunClaudeIntegrationTests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up environment variable
-			defer os.Unsetenv(ClaudeAPIKeyEnv)
+			// Backup existing environment variable
+			originalClaudeAPIKey := os.Getenv(ClaudeAPIKeyEnv)
 
+			// Temporarily rename .env files to prevent them from being loaded
+			var envFileRenamed bool
+			var parentEnvFileRenamed bool
+			if _, err := os.Stat(".env"); err == nil {
+				os.Rename(".env", ".env.test_backup")
+				envFileRenamed = true
+			}
+			if _, err := os.Stat("../.env"); err == nil {
+				os.Rename("../.env", "../.env.test_backup")
+				parentEnvFileRenamed = true
+			}
+
+			// Clean up and restore environment variables and .env files
+			defer func() {
+				// Restore .env files if they were renamed
+				if envFileRenamed {
+					os.Rename(".env.test_backup", ".env")
+				}
+				if parentEnvFileRenamed {
+					os.Rename("../.env.test_backup", "../.env")
+				}
+
+				// Restore original environment variable or unset if it was empty
+				if originalClaudeAPIKey != "" {
+					os.Setenv(ClaudeAPIKeyEnv, originalClaudeAPIKey)
+				} else {
+					os.Unsetenv(ClaudeAPIKeyEnv)
+				}
+			}()
+
+			// Clear environment variable first
+			os.Unsetenv(ClaudeAPIKeyEnv)
+
+			// Set up test environment variable if needed
 			if tt.claudeAPIKey != "" {
 				os.Setenv(ClaudeAPIKeyEnv, tt.claudeAPIKey)
 			}
@@ -679,9 +844,43 @@ func TestCanRunOpenAIIntegrationTests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up environment variable
-			defer os.Unsetenv(OpenAIAPIKeyEnv)
+			// Backup existing environment variable
+			originalOpenAIAPIKey := os.Getenv(OpenAIAPIKeyEnv)
 
+			// Temporarily rename .env files to prevent them from being loaded
+			var envFileRenamed bool
+			var parentEnvFileRenamed bool
+			if _, err := os.Stat(".env"); err == nil {
+				os.Rename(".env", ".env.test_backup")
+				envFileRenamed = true
+			}
+			if _, err := os.Stat("../.env"); err == nil {
+				os.Rename("../.env", "../.env.test_backup")
+				parentEnvFileRenamed = true
+			}
+
+			// Clean up and restore environment variables and .env files
+			defer func() {
+				// Restore .env files if they were renamed
+				if envFileRenamed {
+					os.Rename(".env.test_backup", ".env")
+				}
+				if parentEnvFileRenamed {
+					os.Rename("../.env.test_backup", "../.env")
+				}
+
+				// Restore original environment variable or unset if it was empty
+				if originalOpenAIAPIKey != "" {
+					os.Setenv(OpenAIAPIKeyEnv, originalOpenAIAPIKey)
+				} else {
+					os.Unsetenv(OpenAIAPIKeyEnv)
+				}
+			}()
+
+			// Clear environment variable first
+			os.Unsetenv(OpenAIAPIKeyEnv)
+
+			// Set up test environment variable if needed
 			if tt.openaiAPIKey != "" {
 				os.Setenv(OpenAIAPIKeyEnv, tt.openaiAPIKey)
 			}
@@ -725,12 +924,50 @@ func TestCanRunIntegrationTests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up environment variables
+			// Backup existing environment variables
+			originalClaudeAPIKey := os.Getenv(ClaudeAPIKeyEnv)
+			originalOpenAIAPIKey := os.Getenv(OpenAIAPIKeyEnv)
+
+			// Temporarily rename .env files to prevent them from being loaded
+			var envFileRenamed bool
+			var parentEnvFileRenamed bool
+			if _, err := os.Stat(".env"); err == nil {
+				os.Rename(".env", ".env.test_backup")
+				envFileRenamed = true
+			}
+			if _, err := os.Stat("../.env"); err == nil {
+				os.Rename("../.env", "../.env.test_backup")
+				parentEnvFileRenamed = true
+			}
+
+			// Clean up and restore environment variables and .env files
 			defer func() {
-				os.Unsetenv(ClaudeAPIKeyEnv)
-				os.Unsetenv(OpenAIAPIKeyEnv)
+				// Restore .env files if they were renamed
+				if envFileRenamed {
+					os.Rename(".env.test_backup", ".env")
+				}
+				if parentEnvFileRenamed {
+					os.Rename("../.env.test_backup", "../.env")
+				}
+
+				// Restore original environment variables or unset if they were empty
+				if originalClaudeAPIKey != "" {
+					os.Setenv(ClaudeAPIKeyEnv, originalClaudeAPIKey)
+				} else {
+					os.Unsetenv(ClaudeAPIKeyEnv)
+				}
+				if originalOpenAIAPIKey != "" {
+					os.Setenv(OpenAIAPIKeyEnv, originalOpenAIAPIKey)
+				} else {
+					os.Unsetenv(OpenAIAPIKeyEnv)
+				}
 			}()
 
+			// Clear environment variables first
+			os.Unsetenv(ClaudeAPIKeyEnv)
+			os.Unsetenv(OpenAIAPIKeyEnv)
+
+			// Set up test environment variables if needed
 			if tt.claudeAPIKey != "" {
 				os.Setenv(ClaudeAPIKeyEnv, tt.claudeAPIKey)
 			}

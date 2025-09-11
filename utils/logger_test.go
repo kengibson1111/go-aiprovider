@@ -51,7 +51,7 @@ func TestLogger_Info(t *testing.T) {
 		name           string
 		prefix         string
 		message        string
-		args           []interface{}
+		args           []any
 		expectedPrefix string
 		expectedLevel  string
 		expectedMsg    string
@@ -69,7 +69,7 @@ func TestLogger_Info(t *testing.T) {
 			name:           "logs info message with format args",
 			prefix:         "CLIENT",
 			message:        "user %s has %d items",
-			args:           []interface{}{"john", 5},
+			args:           []any{"john", 5},
 			expectedPrefix: "[CLIENT]",
 			expectedLevel:  "INFO:",
 			expectedMsg:    "user john has 5 items",
@@ -118,7 +118,7 @@ func TestLogger_Error(t *testing.T) {
 		name           string
 		prefix         string
 		message        string
-		args           []interface{}
+		args           []any
 		expectedPrefix string
 		expectedLevel  string
 		expectedMsg    string
@@ -136,7 +136,7 @@ func TestLogger_Error(t *testing.T) {
 			name:           "logs error message with format args",
 			prefix:         "API",
 			message:        "failed to connect to %s with status %d",
-			args:           []interface{}{"api.example.com", 500},
+			args:           []any{"api.example.com", 500},
 			expectedPrefix: "[API]",
 			expectedLevel:  "ERROR:",
 			expectedMsg:    "failed to connect to api.example.com with status 500",
@@ -145,7 +145,7 @@ func TestLogger_Error(t *testing.T) {
 			name:           "logs error message with multiple format types",
 			prefix:         "DB",
 			message:        "query failed: %s, retries: %d, success: %t",
-			args:           []interface{}{"timeout", 3, false},
+			args:           []any{"timeout", 3, false},
 			expectedPrefix: "[DB]",
 			expectedLevel:  "ERROR:",
 			expectedMsg:    "query failed: timeout, retries: 3, success: false",
@@ -185,7 +185,7 @@ func TestLogger_Warn(t *testing.T) {
 		name           string
 		prefix         string
 		message        string
-		args           []interface{}
+		args           []any
 		expectedPrefix string
 		expectedLevel  string
 		expectedMsg    string
@@ -203,7 +203,7 @@ func TestLogger_Warn(t *testing.T) {
 			name:           "logs warning message with format args",
 			prefix:         "CONFIG",
 			message:        "deprecated option %s will be removed in version %s",
-			args:           []interface{}{"old_flag", "2.0"},
+			args:           []any{"old_flag", "2.0"},
 			expectedPrefix: "[CONFIG]",
 			expectedLevel:  "WARN:",
 			expectedMsg:    "deprecated option old_flag will be removed in version 2.0",
@@ -212,7 +212,7 @@ func TestLogger_Warn(t *testing.T) {
 			name:           "logs warning with numeric formatting",
 			prefix:         "PERF",
 			message:        "slow operation took %.2f seconds",
-			args:           []interface{}{1.2345},
+			args:           []any{1.2345},
 			expectedPrefix: "[PERF]",
 			expectedLevel:  "WARN:",
 			expectedMsg:    "slow operation took 1.23 seconds",
@@ -251,9 +251,9 @@ func TestLogger_MessageStructure(t *testing.T) {
 	tests := []struct {
 		name    string
 		prefix  string
-		logFunc func(*Logger, string, ...interface{})
+		logFunc func(*Logger, string, ...any)
 		message string
-		args    []interface{}
+		args    []any
 		level   string
 	}{
 		{

@@ -16,21 +16,21 @@ func NewLogger(prefix string) *Logger {
 }
 
 // Info logs an info message
-func (l *Logger) Info(msg string, args ...interface{}) {
+func (l *Logger) Info(msg string, args ...any) {
 	log.Printf("[%s] INFO: %s", l.prefix, fmt.Sprintf(msg, args...))
 }
 
 // Error logs an error message
-func (l *Logger) Error(msg string, args ...interface{}) {
+func (l *Logger) Error(msg string, args ...any) {
 	log.Printf("[%s] ERROR: %s", l.prefix, fmt.Sprintf(msg, args...))
 }
 
 // Warn logs a warning message
-func (l *Logger) Warn(msg string, args ...interface{}) {
+func (l *Logger) Warn(msg string, args ...any) {
 	log.Printf("[%s] WARN: %s", l.prefix, fmt.Sprintf(msg, args...))
 }
 
 // Debug logs a debug message
-func (l *Logger) Debug(msg string, args ...interface{}) {
+func (l *Logger) Debug(msg string, args ...any) {
 	log.Printf("[%s] DEBUG: %s", l.prefix, fmt.Sprintf(msg, args...))
 }

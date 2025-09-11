@@ -17,7 +17,7 @@ import (
 //
 // Returns:
 //   - error: nil if validation passes, error if name is invalid or value is nil when required
-func CheckNilValue(name string, value interface{}, required bool, logger *Logger) error {
+func CheckNilValue(name string, value any, required bool, logger *Logger) error {
 	// Validate name parameter
 	if name == "" {
 		return errors.New("name parameter must be a valid non-empty string")

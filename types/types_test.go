@@ -180,7 +180,7 @@ func TestCompletionRequest(t *testing.T) {
 		}
 
 		// Verify the JSON contains expected fields
-		var unmarshaled map[string]interface{}
+		var unmarshaled map[string]any
 		if err := json.Unmarshal(data, &unmarshaled); err != nil {
 			t.Fatalf("Failed to unmarshal for verification: %v", err)
 		}
@@ -391,7 +391,7 @@ func TestCodeGenerationRequest(t *testing.T) {
 		}
 
 		// Verify the JSON contains expected fields
-		var unmarshaled map[string]interface{}
+		var unmarshaled map[string]any
 		if err := json.Unmarshal(data, &unmarshaled); err != nil {
 			t.Fatalf("Failed to unmarshal for verification: %v", err)
 		}

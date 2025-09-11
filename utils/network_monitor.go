@@ -250,11 +250,11 @@ func (nm *NetworkMonitor) monitoringLoop(ctx context.Context) {
 }
 
 // GetNetworkInfo returns detailed network information
-func (nm *NetworkMonitor) GetNetworkInfo() map[string]interface{} {
+func (nm *NetworkMonitor) GetNetworkInfo() map[string]any {
 	nm.mu.RLock()
 	defer nm.mu.RUnlock()
 
-	return map[string]interface{}{
+	return map[string]any{
 		"status":        nm.status.String(),
 		"lastCheck":     nm.lastCheck.Format(time.RFC3339),
 		"timeout":       nm.timeout.String(),

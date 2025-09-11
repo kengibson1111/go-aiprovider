@@ -83,18 +83,18 @@ type NamingConventions struct {
 
 // LintingConfig represents linting configuration
 type LintingConfig struct {
-	HasESLint      bool                   `json:"hasESLint"`
-	HasPrettier    bool                   `json:"hasPrettier"`
-	ESLintRules    map[string]interface{} `json:"eslintRules,omitempty"`
-	PrettierConfig map[string]interface{} `json:"prettierConfig,omitempty"`
-	ConfigFiles    []string               `json:"configFiles"`
+	HasESLint      bool           `json:"hasESLint"`
+	HasPrettier    bool           `json:"hasPrettier"`
+	ESLintRules    map[string]any `json:"eslintRules,omitempty"`
+	PrettierConfig map[string]any `json:"prettierConfig,omitempty"`
+	ConfigFiles    []string       `json:"configFiles"`
 }
 
 // TypeScriptInfo represents TypeScript project information
 type TypeScriptInfo struct {
-	IsTypeScriptProject bool                   `json:"isTypeScriptProject"`
-	HasStrictMode       bool                   `json:"hasStrictMode"`
-	UsesTypeAnnotations bool                   `json:"usesTypeAnnotations"`
-	CompilerOptions     map[string]interface{} `json:"compilerOptions,omitempty"`
-	ConfigFile          string                 `json:"configFile,omitempty"`
+	IsTypeScriptProject bool           `json:"isTypeScriptProject"`
+	HasStrictMode       bool           `json:"hasStrictMode"`
+	UsesTypeAnnotations bool           `json:"usesTypeAnnotations"`
+	CompilerOptions     map[string]any `json:"compilerOptions,omitempty"`
+	ConfigFile          string         `json:"configFile,omitempty"`
 }

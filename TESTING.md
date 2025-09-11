@@ -56,13 +56,13 @@ Run unit tests without building executables:
 
 ```bash
 # Run all unit tests (fast, no external dependencies)
-go test -short ./...
+go test -short -timeout 60s ./...
 
 # Run unit tests with verbose output
-go test -short -v ./...
+go test -short -timeout 60s -v ./...
 
 # Run unit tests for a specific package
-go test -short ./utils/
+go test -short -timeout 60s ./utils/
 go test -short ./types/
 go test -short ./client/
 ```
@@ -89,10 +89,10 @@ Run both unit and integration tests:
 
 ```bash
 # Run all tests (unit + integration)
-go test ./...
+go test -timeout 60s ./...
 
 # Run all tests with verbose output
-go test -v ./...
+go test -timeout 60s -v ./...
 ```
 
 ## Test Coverage
@@ -103,7 +103,7 @@ Generate test coverage without creating executables:
 
 ```bash
 # Generate coverage profile
-go test -short -coverprofile=coverage.out ./...
+go test -short -timeout 60s -coverprofile=coverage.out ./...
 
 # View coverage in terminal
 go tool cover -func=coverage.out
@@ -150,12 +150,12 @@ go test -short ./types/
 
 ```bash
 # All utils unit tests
-go test -short ./utils/
+go test -short -timeout 60s ./utils/
 
 # Specific utility tests
-go test -short -run TestHTTPClient ./utils/
+go test -short -timeout 60s -run TestHTTPClient ./utils/
 go test -short -run TestLogger ./utils/
-go test -short -run TestNetworkMonitor ./utils/
+go test -short -timeout 60s -run TestNetworkMonitor ./utils/
 ```
 
 ### Provider Integration Tests
@@ -174,39 +174,6 @@ go test -run Integration ./openai/
 
 #### Windows: Antivirus Blocking Test Execution
 
-**Error**: `fork/exec ... Access is denied`
-
-**Immediate Solutions**:
-
-1. **Use the provided PowerShell script** (Windows only):
-
-   ```powershell
-   # Run unit tests with antivirus workaround
-   .\scripts\run-tests.ps1 unit
-   
-   # Run integration tests
-   .\scripts\run-tests.ps1 integration
-   
-   # Run all tests
-   .\scripts\run-tests.ps1 all
-   
-   # Generate coverage report
-   .\scripts\run-tests.ps1 coverage
-   ```
-
-2. **Manual workaround** (Windows):
-
-   ```powershell
-   # Set custom temp directory for Go builds
-   $env:GOTMPDIR = "C:\temp\go-build"
-   New-Item -ItemType Directory -Force -Path $env:GOTMPDIR
-   go test -short ./...
-
-   # Or try with different build cache
-   go clean -cache
-   go test -short ./...
-   ```
-
 **Permanent Solution** (Windows): Add these directories to antivirus exclusions:
 
 - Your project root directory
@@ -216,15 +183,7 @@ go test -run Integration ./openai/
 
 **Alternative Approaches**:
 
-1. **WSL (Windows Subsystem for Linux)**:
-
-   ```bash
-   # In WSL terminal
-   cd /mnt/c/path/to/your/project
-   go test -short ./...
-   ```
-
-2. **Docker Container** (cross-platform):
+1. **Docker Container** (cross-platform):
 
    ```bash
    # Build test image
@@ -240,9 +199,7 @@ go test -run Integration ./openai/
    docker run --rm -it go-aiprovider-test sh
    ```
 
-3. **CI/CD Pipeline**: Configure GitHub Actions or similar for automated testing
-
-4. **Online Testing**: Use Go playground for small test snippets
+2. **CI/CD Pipeline**: Configure GitHub Actions or similar for automated testing
 
 ### Missing API Keys
 
@@ -279,7 +236,7 @@ sudo dnf groupinstall "Development Tools"
 
 ### Test Performance
 
-- **Unit tests** should complete in seconds
+- **Unit tests** should complete in <60 seconds
 - **Integration tests** may take longer due to API calls
 - Use `-short` flag to run only fast unit tests during development
 
