@@ -5,6 +5,7 @@ A Go library for unified AI provider integration, supporting multiple AI service
 ## Features
 
 - **Unified Interface**: Single API for multiple AI providers (Claude, OpenAI)
+- **Direct Prompt Calls**: Send raw prompts directly to AI providers with CallWithPrompt
 - **Code Completion**: AI-powered code completion with context awareness
 - **Code Generation**: Generate code from natural language prompts
 - **Style Analysis**: Automatic detection of code style preferences
@@ -93,11 +94,16 @@ All AI providers implement the `AIClient` interface:
 
 ```go
 type AIClient interface {
+    CallWithPrompt(ctx context.Context, prompt string) ([]byte, error)
     GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error)
     GenerateCode(ctx context.Context, req types.CodeGenerationRequest) (*types.CodeGenerationResponse, error)
     ValidateCredentials(ctx context.Context) error
 }
 ```
+
+#### `CallWithPrompt(ctx, prompt) ([]byte, error)`
+
+Sends a raw prompt directly to the AI provider and returns the raw response. This is the foundational method that other methods build upon, providing direct access to the AI provider's API without any preprocessing or response parsing.
 
 #### `GenerateCompletion(ctx, req) (*CompletionResponse, error)`
 
@@ -201,6 +207,20 @@ OPENAI_MODEL=gpt-4o-mini
 
 ## Examples
 
+### Direct Prompt Call
+
+```go
+// Send a raw prompt directly to the AI provider
+prompt := "Explain the difference between goroutines and threads in Go"
+response, err := client.CallWithPrompt(ctx, prompt)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Parse the raw response as needed
+fmt.Printf("AI Response: %s\n", string(response))
+```
+
 ### Code Completion
 
 ```go
@@ -267,7 +287,7 @@ Quick start:
 
 ```bash
 # Run unit tests (fast, no external dependencies)
-go test -short ./...
+go test -short -timeout 60s ./...
 
 # Run integration tests (requires .env file with API keys)
 go test -run Integration ./...
