@@ -202,31 +202,31 @@ func DemoSpecialAPIResponses() error {
 	// Test Claude API response
 	claudeResp := helpers.CreateMockClaudeResponse("Hello from Claude mock")
 	if claudeResp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Claude response has wrong status: %d", claudeResp.StatusCode)
+		return fmt.Errorf("the Claude response has wrong status: %d", claudeResp.StatusCode)
 	}
 
 	// Test OpenAI API response
 	openaiResp := helpers.CreateMockOpenAIResponse("Hello from OpenAI mock")
 	if openaiResp.StatusCode != http.StatusOK {
-		return fmt.Errorf("OpenAI response has wrong status: %d", openaiResp.StatusCode)
+		return fmt.Errorf("the OpenAI response has wrong status: %d", openaiResp.StatusCode)
 	}
 
 	// Test rate limit response
 	rateLimitResp := helpers.CreateMockRateLimitResponse()
 	if rateLimitResp.StatusCode != http.StatusTooManyRequests {
-		return fmt.Errorf("Rate limit response has wrong status: %d", rateLimitResp.StatusCode)
+		return fmt.Errorf("rate limit response has wrong status: %d", rateLimitResp.StatusCode)
 	}
 
 	// Test auth error response
 	authErrorResp := helpers.CreateMockAuthErrorResponse()
 	if authErrorResp.StatusCode != http.StatusUnauthorized {
-		return fmt.Errorf("Auth error response has wrong status: %d", authErrorResp.StatusCode)
+		return fmt.Errorf("auth error response has wrong status: %d", authErrorResp.StatusCode)
 	}
 
 	// Test server error response
 	serverErrorResp := helpers.CreateMockServerErrorResponse()
 	if serverErrorResp.StatusCode != http.StatusInternalServerError {
-		return fmt.Errorf("Server error response has wrong status: %d", serverErrorResp.StatusCode)
+		return fmt.Errorf("server error response has wrong status: %d", serverErrorResp.StatusCode)
 	}
 
 	return nil
