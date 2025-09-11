@@ -337,12 +337,8 @@ func TestClaudeIntegration_GenerateCompletion(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	// Create client with real configuration
-	config := &types.AIConfig{
-		Provider: "claude",
-		APIKey:   testConfig.ClaudeAPIKey,
-		Model:    testConfig.ClaudeModel,
-	}
+	// Create client using enhanced TestConfig
+	config := testConfig.CreateClaudeConfig()
 
 	client, err := NewClaudeClient(config)
 	if err != nil {
@@ -398,12 +394,8 @@ func TestClaudeIntegration_GenerateCode(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	// Create client with real configuration
-	config := &types.AIConfig{
-		Provider: "claude",
-		APIKey:   testConfig.ClaudeAPIKey,
-		Model:    testConfig.ClaudeModel,
-	}
+	// Create client using enhanced TestConfig
+	config := testConfig.CreateClaudeConfig()
 
 	client, err := NewClaudeClient(config)
 	if err != nil {
@@ -440,6 +432,57 @@ func TestClaudeIntegration_GenerateCode(t *testing.T) {
 	}
 }
 
+func TestClaudeIntegration_EndpointConfiguration(t *testing.T) {
+	if !utils.CanRunClaudeIntegrationTests() {
+		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
+	}
+
+	// Load test configuration
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client using enhanced TestConfig
+	config := testConfig.CreateClaudeConfig()
+
+	// Verify BaseURL is properly set
+	expectedBaseURL := "https://api.anthropic.com"
+	if testConfig.ClaudeAPIEndpoint != "" {
+		// If custom endpoint is set and valid, it should be used
+		if err := utils.ValidateEndpointURL(testConfig.ClaudeAPIEndpoint); err == nil {
+			expectedBaseURL = testConfig.ClaudeAPIEndpoint
+		}
+	}
+
+	if config.BaseURL != expectedBaseURL {
+		t.Errorf("Expected BaseURL '%s', got: '%s'", expectedBaseURL, config.BaseURL)
+	}
+
+	// Verify other configuration fields are set correctly
+	if config.Provider != "claude" {
+		t.Errorf("Expected Provider 'claude', got: '%s'", config.Provider)
+	}
+
+	if config.APIKey != testConfig.ClaudeAPIKey {
+		t.Errorf("Expected APIKey to match test config")
+	}
+
+	if config.Model != testConfig.ClaudeModel {
+		t.Errorf("Expected Model '%s', got: '%s'", testConfig.ClaudeModel, config.Model)
+	}
+
+	// Test that the client can be created successfully with the configuration
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Claude client with enhanced config: %v", err)
+	}
+
+	if client == nil {
+		t.Fatal("Expected client to be created")
+	}
+}
+
 func TestClaudeIntegration_ErrorHandling(t *testing.T) {
 	if !utils.CanRunClaudeIntegrationTests() {
 		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
@@ -451,12 +494,9 @@ func TestClaudeIntegration_ErrorHandling(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	// Create client with invalid model to test error handling
-	config := &types.AIConfig{
-		Provider: "claude",
-		APIKey:   testConfig.ClaudeAPIKey,
-		Model:    "invalid-model-name",
-	}
+	// Create client using enhanced TestConfig but override model for error testing
+	config := testConfig.CreateClaudeConfig()
+	config.Model = "invalid-model-name"
 
 	client, err := NewClaudeClient(config)
 	if err != nil {
@@ -471,9 +511,23 @@ func TestClaudeIntegration_ErrorHandling(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GenerateCompletion(ctx, req)
-	if err == nil {
-		t.Error("Expected error for invalid model, but got none")
+	response, err := client.GenerateCompletion(ctx, req)
+	if err != nil {
+		t.Fatalf("GenerateCompletion failed: %v", err)
+	}
+
+	// Check that the response contains an error due to invalid model
+	if response.Error == "" {
+		t.Error("Expected error in response for invalid model, but got none")
+	}
+
+	// Verify error response structure
+	if len(response.Suggestions) != 0 {
+		t.Error("Expected no suggestions for invalid model error")
+	}
+
+	if response.Confidence != 0.0 {
+		t.Errorf("Expected confidence 0.0 for invalid model error, got: %f", response.Confidence)
 	}
 }
 

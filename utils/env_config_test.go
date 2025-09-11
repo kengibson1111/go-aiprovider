@@ -458,19 +458,19 @@ func TestValidateEndpointURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateEndpointURL(tt.url)
+			err := ValidateEndpointURL(tt.url)
 
 			if tt.expectError {
 				if err == nil {
-					t.Errorf("validateEndpointURL(%s) expected error but got nil", tt.url)
+					t.Errorf("ValidateEndpointURL(%s) expected error but got nil", tt.url)
 					return
 				}
 				if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-					t.Errorf("validateEndpointURL(%s) error = %v, want error containing %s", tt.url, err, tt.errorMsg)
+					t.Errorf("ValidateEndpointURL(%s) error = %v, want error containing %s", tt.url, err, tt.errorMsg)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("validateEndpointURL(%s) unexpected error: %v", tt.url, err)
+					t.Errorf("ValidateEndpointURL(%s) unexpected error: %v", tt.url, err)
 				}
 			}
 		})

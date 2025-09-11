@@ -779,11 +779,8 @@ func TestOpenAIClient_ValidateCredentials_Integration(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	config := &types.AIConfig{
-		Provider: "openai",
-		APIKey:   testConfig.OpenAIAPIKey,
-		Model:    testConfig.OpenAIModel,
-	}
+	// Create client using enhanced TestConfig
+	config := testConfig.CreateOpenAIConfig()
 
 	client, err := NewOpenAIClient(config)
 	if err != nil {
@@ -808,13 +805,10 @@ func TestOpenAIClient_GenerateCompletion_Integration(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	config := &types.AIConfig{
-		Provider:    "openai",
-		APIKey:      testConfig.OpenAIAPIKey,
-		Model:       testConfig.OpenAIModel,
-		MaxTokens:   100,
-		Temperature: 0.1, // Low temperature for more predictable results
-	}
+	// Create client using enhanced TestConfig with custom settings for testing
+	config := testConfig.CreateOpenAIConfig()
+	config.MaxTokens = 100
+	config.Temperature = 0.1 // Low temperature for more predictable results
 
 	client, err := NewOpenAIClient(config)
 	if err != nil {
@@ -870,13 +864,10 @@ func TestOpenAIClient_GenerateCode_Integration(t *testing.T) {
 		t.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	config := &types.AIConfig{
-		Provider:    "openai",
-		APIKey:      testConfig.OpenAIAPIKey,
-		Model:       testConfig.OpenAIModel,
-		MaxTokens:   200,
-		Temperature: 0.1, // Low temperature for more predictable results
-	}
+	// Create client using enhanced TestConfig with custom settings for testing
+	config := testConfig.CreateOpenAIConfig()
+	config.MaxTokens = 200
+	config.Temperature = 0.1 // Low temperature for more predictable results
 
 	client, err := NewOpenAIClient(config)
 	if err != nil {
@@ -913,5 +904,55 @@ func TestOpenAIClient_GenerateCode_Integration(t *testing.T) {
 	code := strings.ToLower(resp.Code)
 	if !strings.Contains(code, "function") && !strings.Contains(code, "=>") {
 		t.Errorf("Generated code doesn't appear to contain a function definition: %s", resp.Code)
+	}
+}
+
+func TestOpenAIClient_EndpointConfiguration_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client using enhanced TestConfig
+	config := testConfig.CreateOpenAIConfig()
+
+	// Verify BaseURL is properly set
+	expectedBaseURL := "https://api.openai.com"
+	if testConfig.OpenAIAPIEndpoint != "" {
+		// If custom endpoint is set and valid, it should be used
+		if err := utils.ValidateEndpointURL(testConfig.OpenAIAPIEndpoint); err == nil {
+			expectedBaseURL = testConfig.OpenAIAPIEndpoint
+		}
+	}
+
+	if config.BaseURL != expectedBaseURL {
+		t.Errorf("Expected BaseURL '%s', got: '%s'", expectedBaseURL, config.BaseURL)
+	}
+
+	// Verify other configuration fields are set correctly
+	if config.Provider != "openai" {
+		t.Errorf("Expected Provider 'openai', got: '%s'", config.Provider)
+	}
+
+	if config.APIKey != testConfig.OpenAIAPIKey {
+		t.Errorf("Expected APIKey to match test config")
+	}
+
+	if config.Model != testConfig.OpenAIModel {
+		t.Errorf("Expected Model '%s', got: '%s'", testConfig.OpenAIModel, config.Model)
+	}
+
+	// Test that the client can be created successfully with the configuration
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client with enhanced config: %v", err)
+	}
+
+	if client == nil {
+		t.Fatal("Expected client to be created")
 	}
 }

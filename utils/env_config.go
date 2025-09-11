@@ -23,9 +23,9 @@ const (
 	OpenAIAPIEndpointEnv = "OPENAI_API_ENDPOINT" // Custom OpenAI API base URL (optional)
 )
 
-// validateEndpointURL validates that a URL is properly formatted for API endpoints
+// ValidateEndpointURL validates that a URL is properly formatted for API endpoints
 // Returns error if URL is invalid, nil if valid or empty
-func validateEndpointURL(endpoint string) error {
+func ValidateEndpointURL(endpoint string) error {
 	// Empty URLs are allowed (will use defaults)
 	if endpoint == "" {
 		return nil
@@ -74,14 +74,20 @@ func validateEndpointURL(endpoint string) error {
 // LoadEnvConfig loads environment variables from .env file if it exists
 // Returns nil if successful or if .env file doesn't exist
 func LoadEnvConfig() error {
-	// Check if .env file exists
-	if _, err := os.Stat(".env"); os.IsNotExist(err) {
-		// .env file doesn't exist, which is fine - use system environment variables
-		return nil
+	// Check if .env file exists in current directory
+	if _, err := os.Stat(".env"); err == nil {
+		// Load .env file from current directory
+		return godotenv.Load()
 	}
 
-	// Load .env file
-	return godotenv.Load()
+	// Check if .env file exists in parent directory (for tests run from subdirectories)
+	if _, err := os.Stat("../.env"); err == nil {
+		// Load .env file from parent directory
+		return godotenv.Load("../.env")
+	}
+
+	// .env file doesn't exist in current or parent directory, which is fine - use system environment variables
+	return nil
 }
 
 // GetEnvVar gets an environment variable with an optional default value
@@ -148,7 +154,7 @@ func (tc *TestConfig) CreateClaudeConfig() *types.AIConfig {
 	baseURL := "https://api.anthropic.com"
 
 	// Use custom endpoint if it's valid
-	if tc.ClaudeAPIEndpoint != "" && validateEndpointURL(tc.ClaudeAPIEndpoint) == nil {
+	if tc.ClaudeAPIEndpoint != "" && ValidateEndpointURL(tc.ClaudeAPIEndpoint) == nil {
 		baseURL = tc.ClaudeAPIEndpoint
 	}
 
@@ -168,7 +174,7 @@ func (tc *TestConfig) CreateOpenAIConfig() *types.AIConfig {
 	baseURL := "https://api.openai.com"
 
 	// Use custom endpoint if it's valid
-	if tc.OpenAIAPIEndpoint != "" && validateEndpointURL(tc.OpenAIAPIEndpoint) == nil {
+	if tc.OpenAIAPIEndpoint != "" && ValidateEndpointURL(tc.OpenAIAPIEndpoint) == nil {
 		baseURL = tc.OpenAIAPIEndpoint
 	}
 
