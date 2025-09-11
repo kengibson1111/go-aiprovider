@@ -165,13 +165,8 @@ func (c *ClaudeClient) ValidateCredentials(ctx context.Context) error {
 	return nil
 }
 
-// GenerateCompletion generates code completion using Claude API
-func (c *ClaudeClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
-	c.logger.Info("Generating completion for language: %s", req.Language)
-
-	// Build context-aware prompt
-	prompt := c.buildCompletionPrompt(req)
-
+// CallWithPrompt calls the Claude API
+func (c *ClaudeClient) CallWithPrompt(ctx context.Context, prompt string) ([]byte, error) {
 	messages := []ClaudeMessage{
 		{
 			Role:    "user",
@@ -207,24 +202,34 @@ func (c *ClaudeClient) GenerateCompletion(ctx context.Context, req types.Complet
 	resp, err := c.DoRequest(ctx, httpReq)
 	if err != nil {
 		c.logger.Error("Completion request failed: %v", err)
-		return &types.CompletionResponse{
-			Suggestions: []string{},
-			Confidence:  0.0,
-			Error:       fmt.Sprintf("Request failed: %v", err),
-		}, nil
+		return []byte{}, fmt.Errorf("request failed: %v", err)
 	}
 
 	if err := c.ValidateResponse(resp); err != nil {
 		c.logger.Error("Invalid response: %v", err)
+		return []byte{}, fmt.Errorf("API error: %v", err)
+	}
+
+	return resp.Body, nil
+}
+
+// GenerateCompletion generates code completion using Claude API
+func (c *ClaudeClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
+	c.logger.Info("Generating completion for language: %s", req.Language)
+
+	// Build context-aware prompt
+	prompt := c.buildCompletionPrompt(req)
+	resp, err := c.CallWithPrompt(ctx, prompt)
+	if err != nil {
 		return &types.CompletionResponse{
 			Suggestions: []string{},
 			Confidence:  0.0,
-			Error:       fmt.Sprintf("API error: %v", err),
+			Error:       fmt.Sprintf("ERROR: %v", err),
 		}, nil
 	}
 
 	var claudeResp ClaudeResponse
-	if err := json.Unmarshal(resp.Body, &claudeResp); err != nil {
+	if err := json.Unmarshal(resp, &claudeResp); err != nil {
 		c.logger.Error("Failed to unmarshal response: %v", err)
 		return &types.CompletionResponse{
 			Suggestions: []string{},
@@ -251,58 +256,16 @@ func (c *ClaudeClient) GenerateCode(ctx context.Context, req types.CodeGeneratio
 
 	// Build context-aware prompt
 	prompt := c.buildCodeGenerationPrompt(req)
-
-	messages := []ClaudeMessage{
-		{
-			Role:    "user",
-			Content: prompt,
-		},
-	}
-
-	claudeReq := ClaudeRequest{
-		Model:       c.model,
-		MaxTokens:   c.maxTokens,
-		Temperature: c.temperature,
-		Messages:    messages,
-	}
-
-	reqBody, err := json.Marshal(claudeReq)
+	resp, err := c.CallWithPrompt(ctx, prompt)
 	if err != nil {
-		c.logger.Error("Failed to marshal code generation request: %v", err)
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	headers := map[string]string{
-		"x-api-key":         c.ApiKey,
-		"anthropic-version": "2023-06-01",
-	}
-
-	httpReq := utils.HTTPRequest{
-		Method:  "POST",
-		Path:    "/v1/messages",
-		Headers: headers,
-		Body:    bytes.NewReader(reqBody),
-	}
-
-	resp, err := c.DoRequest(ctx, httpReq)
-	if err != nil {
-		c.logger.Error("Code generation request failed: %v", err)
 		return &types.CodeGenerationResponse{
 			Code:  "",
-			Error: fmt.Sprintf("Request failed: %v", err),
-		}, nil
-	}
-
-	if err := c.ValidateResponse(resp); err != nil {
-		c.logger.Error("Invalid response: %v", err)
-		return &types.CodeGenerationResponse{
-			Code:  "",
-			Error: fmt.Sprintf("API error: %v", err),
+			Error: fmt.Sprintf("ERROR: %v", err),
 		}, nil
 	}
 
 	var claudeResp ClaudeResponse
-	if err := json.Unmarshal(resp.Body, &claudeResp); err != nil {
+	if err := json.Unmarshal(resp, &claudeResp); err != nil {
 		c.logger.Error("Failed to unmarshal response: %v", err)
 		return &types.CodeGenerationResponse{
 			Code:  "",

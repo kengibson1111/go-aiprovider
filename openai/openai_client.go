@@ -174,13 +174,8 @@ func (c *OpenAIClient) ValidateCredentials(ctx context.Context) error {
 	return nil
 }
 
-// GenerateCompletion generates code completion using OpenAI API
-func (c *OpenAIClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
-	c.logger.Info("Generating completion for language: %s", req.Language)
-
-	// Build context-aware prompt
-	prompt := c.buildCompletionPrompt(req)
-
+// CallWithPrompt calls the OpenAI API
+func (c *OpenAIClient) CallWithPrompt(ctx context.Context, prompt string) ([]byte, error) {
 	messages := []OpenAIMessage{
 		{
 			Role:    "user",
@@ -216,11 +211,7 @@ func (c *OpenAIClient) GenerateCompletion(ctx context.Context, req types.Complet
 	resp, err := c.DoRequest(ctx, httpReq)
 	if err != nil {
 		c.logger.Error("Completion request failed: %v", err)
-		return &types.CompletionResponse{
-			Suggestions: []string{},
-			Confidence:  0.0,
-			Error:       fmt.Sprintf("Request failed: %v", err),
-		}, nil
+		return []byte{}, fmt.Errorf("request failed: %v", err)
 	}
 
 	if err := c.ValidateResponse(resp); err != nil {
@@ -228,22 +219,32 @@ func (c *OpenAIClient) GenerateCompletion(ctx context.Context, req types.Complet
 
 		// Handle rate limiting specifically
 		if resp.StatusCode == 429 {
-			return &types.CompletionResponse{
-				Suggestions: []string{},
-				Confidence:  0.0,
-				Error:       "Rate limit exceeded. Please try again later.",
-			}, nil
+			return []byte{}, fmt.Errorf("rate limit exceeded. Please try again later: %v", err)
 		}
 
+		return []byte{}, fmt.Errorf("API error: %v", err)
+	}
+
+	return resp.Body, nil
+}
+
+// GenerateCompletion generates code completion using OpenAI API
+func (c *OpenAIClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
+	c.logger.Info("Generating completion for language: %s", req.Language)
+
+	// Build context-aware prompt
+	prompt := c.buildCompletionPrompt(req)
+	resp, err := c.CallWithPrompt(ctx, prompt)
+	if err != nil {
 		return &types.CompletionResponse{
 			Suggestions: []string{},
 			Confidence:  0.0,
-			Error:       fmt.Sprintf("API error: %v", err),
+			Error:       fmt.Sprintf("ERROR: %v", err),
 		}, nil
 	}
 
 	var openaiResp OpenAIResponse
-	if err := json.Unmarshal(resp.Body, &openaiResp); err != nil {
+	if err := json.Unmarshal(resp, &openaiResp); err != nil {
 		c.logger.Error("Failed to unmarshal response: %v", err)
 		return &types.CompletionResponse{
 			Suggestions: []string{},
@@ -270,67 +271,16 @@ func (c *OpenAIClient) GenerateCode(ctx context.Context, req types.CodeGeneratio
 
 	// Build context-aware prompt
 	prompt := c.buildCodeGenerationPrompt(req)
-
-	messages := []OpenAIMessage{
-		{
-			Role:    "user",
-			Content: prompt,
-		},
-	}
-
-	openaiReq := OpenAIRequest{
-		Model:       c.model,
-		Messages:    messages,
-		MaxTokens:   c.maxTokens,
-		Temperature: c.temperature,
-		Stream:      false,
-	}
-
-	reqBody, err := json.Marshal(openaiReq)
+	resp, err := c.CallWithPrompt(ctx, prompt)
 	if err != nil {
-		c.logger.Error("Failed to marshal code generation request: %v", err)
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	headers := map[string]string{
-		"Authorization": "Bearer " + c.ApiKey,
-	}
-
-	httpReq := utils.HTTPRequest{
-		Method:  "POST",
-		Path:    "/v1/chat/completions",
-		Headers: headers,
-		Body:    bytes.NewReader(reqBody),
-	}
-
-	resp, err := c.DoRequest(ctx, httpReq)
-	if err != nil {
-		c.logger.Error("Code generation request failed: %v", err)
 		return &types.CodeGenerationResponse{
 			Code:  "",
-			Error: fmt.Sprintf("Request failed: %v", err),
-		}, nil
-	}
-
-	if err := c.ValidateResponse(resp); err != nil {
-		c.logger.Error("Invalid response: %v", err)
-
-		// Handle rate limiting specifically
-		if resp.StatusCode == 429 {
-			return &types.CodeGenerationResponse{
-				Code:  "",
-				Error: "Rate limit exceeded. Please try again later.",
-			}, nil
-		}
-
-		return &types.CodeGenerationResponse{
-			Code:  "",
-			Error: fmt.Sprintf("API error: %v", err),
+			Error: fmt.Sprintf("ERROR: %v", err),
 		}, nil
 	}
 
 	var openaiResp OpenAIResponse
-	if err := json.Unmarshal(resp.Body, &openaiResp); err != nil {
+	if err := json.Unmarshal(resp, &openaiResp); err != nil {
 		c.logger.Error("Failed to unmarshal response: %v", err)
 		return &types.CodeGenerationResponse{
 			Code:  "",
