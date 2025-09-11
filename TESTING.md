@@ -1,6 +1,6 @@
 # Testing Guide
 
-This document provides comprehensive instructions for running tests in this Go AI provider library, with emphasis on avoiding Windows executable generation per project guidelines.
+This document provides comprehensive instructions for running tests in this Go AI provider library across all platforms (Windows, macOS, and Linux).
 
 ## Test Types Overview
 
@@ -15,8 +15,16 @@ This project uses two distinct types of tests:
 
 1. Copy the sample environment file:
 
+   **Windows (PowerShell):**
+
    ```powershell
    Copy-Item .env.sample .env
+   ```
+
+   **macOS/Linux:**
+
+   ```bash
+   cp .env.sample .env
    ```
 
 2. Edit `.env` with your actual API keys and preferred models:
@@ -37,11 +45,16 @@ This project uses two distinct types of tests:
 
 ## Running Tests
 
+**Quick Start**: Use the provided scripts for a streamlined experience:
+
+- **Windows**: `.\scripts\run-tests.ps1 unit`
+- **Linux/macOS**: `./scripts/run-tests.sh unit` (make executable first: `chmod +x scripts/run-tests.sh`)
+
 ### Unit Tests Only (Recommended for Development)
 
 Run unit tests without building executables:
 
-```powershell
+```bash
 # Run all unit tests (fast, no external dependencies)
 go test -short ./...
 
@@ -58,7 +71,7 @@ go test -short ./client/
 
 Run integration tests that use real API endpoints:
 
-```powershell
+```bash
 # Run integration tests (requires .env file with valid API keys)
 go test -run Integration ./...
 
@@ -74,7 +87,7 @@ go test -run Integration ./openai/
 
 Run both unit and integration tests:
 
-```powershell
+```bash
 # Run all tests (unit + integration)
 go test ./...
 
@@ -88,7 +101,7 @@ go test -v ./...
 
 Generate test coverage without creating executables:
 
-```powershell
+```bash
 # Generate coverage profile
 go test -short -coverprofile=coverage.out ./...
 
@@ -121,21 +134,21 @@ go tool cover -html=coverage.out
 
 ### client/client.go
 
-```powershell
+```bash
 # Unit tests for client factory and provider selection
 go test -short ./client/
 ```
 
-### types/types.go  
+### types/types.go
 
-```powershell
+```bash
 # Unit tests for type validation and serialization
 go test -short ./types/
 ```
 
 ### utils/ Package
 
-```powershell
+```bash
 # All utils unit tests
 go test -short ./utils/
 
@@ -147,23 +160,25 @@ go test -short -run TestNetworkMonitor ./utils/
 
 ### Provider Integration Tests
 
-```powershell
+```bash
 # Claude integration tests (requires CLAUDE_API_KEY)
 go test -run Integration ./claude/
 
-# OpenAI integration tests (requires OPENAI_API_KEY)  
+# OpenAI integration tests (requires OPENAI_API_KEY)
 go test -run Integration ./openai/
 ```
 
 ## Troubleshooting
 
-### Antivirus Blocking Test Execution
+### Platform-Specific Issues
+
+#### Windows: Antivirus Blocking Test Execution
 
 **Error**: `fork/exec ... Access is denied`
 
 **Immediate Solutions**:
 
-1. **Use the provided PowerShell script** (recommended):
+1. **Use the provided PowerShell script** (Windows only):
 
    ```powershell
    # Run unit tests with antivirus workaround
@@ -179,7 +194,7 @@ go test -run Integration ./openai/
    .\scripts\run-tests.ps1 coverage
    ```
 
-2. **Manual workaround**:
+2. **Manual workaround** (Windows):
 
    ```powershell
    # Set custom temp directory for Go builds
@@ -192,14 +207,14 @@ go test -run Integration ./openai/
    go test -short ./...
    ```
 
-**Permanent Solution**: Add these directories to Trend Micro exclusions:
+**Permanent Solution** (Windows): Add these directories to antivirus exclusions:
 
-- Your project root directory: `C:\Users\[Username]\myprojects-win\golang\src\github.com\kengibson1111\go-aiprovider`
+- Your project root directory
 - Go's temporary build directories: `%TEMP%\go-build*`
 - Go's build cache: `%LOCALAPPDATA%\go-build`
 - Custom temp directory: `C:\temp\go-build*`
 
-**Alternative Approaches if Antivirus Cannot Be Configured**:
+**Alternative Approaches**:
 
 1. **WSL (Windows Subsystem for Linux)**:
 
@@ -209,9 +224,9 @@ go test -run Integration ./openai/
    go test -short ./...
    ```
 
-2. **Docker Container** (using provided Dockerfile.test):
+2. **Docker Container** (cross-platform):
 
-   ```powershell
+   ```bash
    # Build test image
    docker build -f Dockerfile.test -t go-aiprovider-test .
    
@@ -237,39 +252,30 @@ If integration tests fail due to missing API keys:
 2. Check that environment variables are loaded correctly
 3. Integration tests will be skipped automatically if keys are missing
 
-### Windows Antivirus Issues
+#### macOS: Permission Issues
 
-This project may encounter antivirus interference when running tests:
+If you encounter permission errors:
 
-**Common Issue**: `fork/exec ... Access is denied` when running `go test`
+```bash
+# Ensure Go has proper permissions
+sudo chown -R $(whoami) $(go env GOPATH)
+sudo chown -R $(whoami) $(go env GOCACHE)
+```
 
-**Solutions**:
+#### Linux: Missing Dependencies
 
-1. **Add project directory to antivirus exclusions**:
-   - Add your project root directory to Trend Micro exclusions
-   - Include both source and temp build directories
+Install required packages:
 
-2. **Alternative test approaches**:
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install build-essential
 
-   ```powershell
-   # Try running tests with different temp directory
-   $env:GOTMPDIR = "C:\temp\go-build"
-   New-Item -ItemType Directory -Force -Path $env:GOTMPDIR
-   go test -short ./...
-   ```
-
-3. **Use go run for individual test files** (when possible):
-
-   ```powershell
-   # For debugging specific test issues
-   go run -tags test specific_test_file.go
-   ```
-
-**Prevention**:
-
-- **DO NOT** use `go build` to create `.exe` files unnecessarily
-- **USE** `go test` and `go run` commands which create temporary executables
-- **CONFIGURE** antivirus exclusions for Go development
+# CentOS/RHEL/Fedora
+sudo yum groupinstall "Development Tools"
+# or for newer versions:
+sudo dnf groupinstall "Development Tools"
+```
 
 ### Test Performance
 
@@ -295,7 +301,7 @@ integration-tests:
 
 Run before committing code:
 
-```powershell
+```bash
 # Quick unit test check
 go test -short ./...
 
@@ -338,7 +344,30 @@ Always test error scenarios:
 
 ### Essential Test Commands
 
-**Using PowerShell Script (Recommended for Windows)**:
+**Cross-Platform Go Commands**:
+
+```bash
+# Development (fast unit tests only)
+go test -short ./...
+
+# Pre-commit (all tests if keys available)
+go test ./...
+
+# Coverage analysis
+go test -short -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Specific package testing
+go test -short ./utils/
+go test -run Integration ./claude/
+
+# Verbose output for debugging
+go test -short -v ./...
+```
+
+**Platform-Specific Scripts**:
+
+**Windows (PowerShell)**:
 
 ```powershell
 # Development (fast unit tests only)
@@ -354,28 +383,28 @@ Always test error scenarios:
 .\scripts\run-tests.ps1 coverage
 ```
 
-**Direct Go Commands** (may require antivirus exclusions):
+**Linux/macOS (Bash)**:
 
-```powershell
+```bash
+# Make script executable (first time only)
+chmod +x scripts/run-tests.sh
+
 # Development (fast unit tests only)
-go test -short ./...
+./scripts/run-tests.sh unit
 
-# Pre-commit (all tests if keys available)  
-go test ./...
+# Integration tests
+./scripts/run-tests.sh integration
+
+# All tests
+./scripts/run-tests.sh all
 
 # Coverage analysis
-go test -short -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
-
-# Specific package testing
-go test -short ./utils/
-go test -run Integration ./claude/
-
-# Verbose output for debugging
-go test -short -v ./...
+./scripts/run-tests.sh coverage
 ```
 
-### Environment Commands
+### Environment Setup Commands
+
+**Windows (PowerShell)**:
 
 ```powershell
 # Copy sample environment file
@@ -384,8 +413,26 @@ Copy-Item .env.sample .env
 # Check if .env exists
 Test-Path .env
 
-# View environment variables (PowerShell)
+# View environment variables
 Get-ChildItem Env: | Where-Object Name -like "*API*"
 ```
 
-Remember: This project prioritizes avoiding Windows executable generation. Always use `go test` and `go run` commands instead of building executables.
+**macOS/Linux (Bash)**:
+
+```bash
+# Copy sample environment file
+cp .env.sample .env
+
+# Check if .env exists
+ls -la .env
+
+# View environment variables
+env | grep API
+```
+
+### Platform Notes
+
+- **All Platforms**: Use `go test` and `go run` commands for cross-platform compatibility
+- **Windows**: PowerShell scripts available for antivirus workarounds
+- **macOS/Linux**: Standard Unix commands work as expected
+- **Docker**: Available for consistent testing across all platforms
