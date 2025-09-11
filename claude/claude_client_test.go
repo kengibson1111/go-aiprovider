@@ -2,6 +2,7 @@ package claude
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/kengibson1111/go-aiprovider/types"
@@ -325,6 +326,110 @@ func TestCalculateConfidence(t *testing.T) {
 }
 
 // Integration Tests - These tests use real API endpoints
+
+func TestClaudeClient_CallWithPrompt_Integration(t *testing.T) {
+	if !utils.CanRunClaudeIntegrationTests() {
+		t.Skip("Skipping Claude integration test: CLAUDE_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	// Create client using enhanced TestConfig with custom settings for testing
+	config := testConfig.CreateClaudeConfig()
+	config.MaxTokens = 150
+	config.Temperature = 0.1 // Low temperature for more predictable results
+
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Claude client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test cases with different types of prompts that are distinct from GenerateCompletion and GenerateCode
+	testCases := []struct {
+		name           string
+		prompt         string
+		expectedInResp []string // Keywords we expect to find in the response
+		minLength      int      // Minimum expected response length
+	}{
+		{
+			name:           "creative writing prompt",
+			prompt:         "Write a short poem about coding. Return only the poem, no explanations.",
+			expectedInResp: []string{}, // Poem content is unpredictable, just check it's not empty
+			minLength:      10,
+		},
+		{
+			name:           "mathematical calculation",
+			prompt:         "What is 12 * 17? Provide only the numerical answer.",
+			expectedInResp: []string{"204"}, // Should contain the correct answer
+			minLength:      1,
+		},
+		{
+			name:           "simple question answering",
+			prompt:         "What is the capital of Japan? Answer in one word only.",
+			expectedInResp: []string{"Tokyo"}, // Should contain Tokyo
+			minLength:      3,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := client.CallWithPrompt(ctx, tc.prompt)
+
+			if err != nil {
+				t.Fatalf("CallWithPrompt failed for %s: %v", tc.name, err)
+			}
+
+			if len(resp) == 0 {
+				t.Errorf("Expected non-empty response for %s", tc.name)
+				return
+			}
+
+			// Parse the response to verify it's valid JSON
+			var claudeResp ClaudeResponse
+			if err := json.Unmarshal(resp, &claudeResp); err != nil {
+				t.Errorf("Failed to unmarshal response for %s: %v", tc.name, err)
+				return
+			}
+
+			// Verify response structure
+			if len(claudeResp.Content) == 0 {
+				t.Errorf("Expected at least one content block in response for %s", tc.name)
+				return
+			}
+
+			content := claudeResp.Content[0].Text
+			if len(content) < tc.minLength {
+				t.Errorf("Response content too short for %s. Expected at least %d characters, got %d: %s",
+					tc.name, tc.minLength, len(content), content)
+			}
+
+			// Check for expected keywords in response
+			for _, expected := range tc.expectedInResp {
+				if !contains(content, expected) {
+					t.Errorf("Expected response for %s to contain '%s', but got: %s",
+						tc.name, expected, content)
+				}
+			}
+
+			// Verify response metadata
+			if claudeResp.Model == "" {
+				t.Errorf("Expected model field to be set in response for %s", tc.name)
+			}
+
+			if claudeResp.ID == "" {
+				t.Errorf("Expected ID field to be set in response for %s", tc.name)
+			}
+
+			// Log the response for manual verification during development
+			t.Logf("Response for %s: %s", tc.name, content)
+		})
+	}
+}
 
 func TestClaudeIntegration_GenerateCompletion(t *testing.T) {
 	if !utils.CanRunClaudeIntegrationTests() {
