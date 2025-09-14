@@ -3,7 +3,11 @@ package claude
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/kengibson1111/go-aiprovider/types"
 	"github.com/kengibson1111/go-aiprovider/utils"
@@ -633,6 +637,273 @@ func TestClaudeIntegration_ErrorHandling(t *testing.T) {
 
 	if response.Confidence != 0.0 {
 		t.Errorf("Expected confidence 0.0 for invalid model error, got: %f", response.Confidence)
+	}
+}
+
+func TestClaudeClient_CallWithPromptAndVariables(t *testing.T) {
+	tests := []struct {
+		name           string
+		prompt         string
+		variablesJSON  string
+		mockResponse   string
+		mockStatusCode int
+		expectError    bool
+		errorContains  string
+		expectedPrompt string // The prompt we expect to be sent to CallWithPrompt
+	}{
+		{
+			name:           "successful variable substitution",
+			prompt:         "Hello {{name}}, please review this {{language}} code.",
+			variablesJSON:  `{"name": "Alice", "language": "Go"}`,
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Review completed"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Hello Alice, please review this Go code.",
+		},
+		{
+			name:           "multiple variables in template",
+			prompt:         "Task: {{task}} for {{user}} in {{language}} with priority {{priority}}",
+			variablesJSON:  `{"task": "code review", "user": "Bob", "language": "JavaScript", "priority": "high"}`,
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Task assigned"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Task: code review for Bob in JavaScript with priority high",
+		},
+		{
+			name:           "missing variables remain unchanged",
+			prompt:         "Hello {{name}}, missing {{unknown}} variable",
+			variablesJSON:  `{"name": "Charlie"}`,
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Hello response"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Hello Charlie, missing {{unknown}} variable",
+		},
+		{
+			name:           "empty variables JSON",
+			prompt:         "No variables here",
+			variablesJSON:  `{}`,
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "No variables response"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "No variables here",
+		},
+		{
+			name:           "null variables JSON",
+			prompt:         "Template with {{var}}",
+			variablesJSON:  "",
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "Null response"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Template with {{var}}",
+		},
+		{
+			name:          "malformed JSON error",
+			prompt:        "Hello {{name}}",
+			variablesJSON: `{"name": "Alice"`, // Missing closing brace
+			expectError:   true,
+			errorContains: "variable substitution failed",
+		},
+		{
+			name:          "empty template error",
+			prompt:        "",
+			variablesJSON: `{"name": "Alice"}`,
+			expectError:   true,
+			errorContains: "variable substitution failed",
+		},
+		{
+			name:           "API error propagation",
+			prompt:         "Hello {{name}}",
+			variablesJSON:  `{"name": "Alice"}`,
+			mockResponse:   `{"type": "error", "error": {"type": "rate_limit_error", "message": "Rate limit exceeded"}}`,
+			mockStatusCode: 429,
+			expectError:    true,
+			errorContains:  "API error",
+			expectedPrompt: "Hello Alice",
+		},
+		{
+			name:           "special characters in variables",
+			prompt:         "User: {{user_name}}, Email: {{email-address}}",
+			variablesJSON:  `{"user_name": "John Doe", "email-address": "john@example.com"}`,
+			mockResponse:   `{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "User processed"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "User: John Doe, Email: john@example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualPromptSent string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Capture the prompt that was actually sent
+				var reqBody ClaudeRequest
+				if err := json.NewDecoder(r.Body).Decode(&reqBody); err == nil {
+					if len(reqBody.Messages) > 0 {
+						actualPromptSent = reqBody.Messages[0].Content
+					}
+				}
+
+				w.WriteHeader(tt.mockStatusCode)
+				w.Write([]byte(tt.mockResponse))
+			}))
+			defer server.Close()
+
+			config := &types.AIConfig{
+				Provider: "claude",
+				APIKey:   "test-key",
+				BaseURL:  server.URL,
+				Model:    "claude-3-sonnet-20240229",
+			}
+
+			client, err := NewClaudeClient(config)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ctx := context.Background()
+			resp, err := client.CallWithPromptAndVariables(ctx, tt.prompt, tt.variablesJSON)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				if !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("Expected error to contain '%s', got: %s", tt.errorContains, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if len(resp) == 0 {
+				t.Errorf("Expected non-empty response")
+				return
+			}
+
+			// Verify the correct processed prompt was sent to the API
+			if tt.expectedPrompt != "" && actualPromptSent != tt.expectedPrompt {
+				t.Errorf("Expected prompt '%s' to be sent to API, but got '%s'", tt.expectedPrompt, actualPromptSent)
+			}
+
+			// Verify response is valid JSON
+			var claudeResp ClaudeResponse
+			if err := json.Unmarshal(resp, &claudeResp); err != nil {
+				t.Errorf("Failed to unmarshal response: %v", err)
+			}
+		})
+	}
+}
+
+func TestClaudeClient_CallWithPromptAndVariables_ContextCancellation(t *testing.T) {
+	// Create a server that delays response to test context cancellation
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond) // Delay to allow context cancellation
+		w.WriteHeader(200)
+		w.Write([]byte(`{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "test"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`))
+	}))
+	defer server.Close()
+
+	config := &types.AIConfig{
+		Provider: "claude",
+		APIKey:   "test-key",
+		BaseURL:  server.URL,
+		Model:    "claude-3-sonnet-20240229",
+	}
+
+	client, err := NewClaudeClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Create a context that will be cancelled
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	prompt := "Hello {{name}}"
+	variablesJSON := `{"name": "Alice"}`
+
+	_, err = client.CallWithPromptAndVariables(ctx, prompt, variablesJSON)
+
+	if err == nil {
+		t.Errorf("Expected context cancellation error")
+	}
+
+	if !strings.Contains(err.Error(), "context") && !strings.Contains(err.Error(), "timeout") && !strings.Contains(err.Error(), "deadline") {
+		t.Errorf("Expected context-related error, got: %v", err)
+	}
+}
+
+func TestClaudeClient_CallWithPromptAndVariables_ErrorPropagation(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectedError string
+	}{
+		{
+			name:          "rate limit error",
+			statusCode:    429,
+			responseBody:  `{"type": "error", "error": {"type": "rate_limit_error", "message": "Rate limit exceeded"}}`,
+			expectedError: "API error",
+		},
+		{
+			name:          "invalid API key",
+			statusCode:    401,
+			responseBody:  `{"type": "error", "error": {"type": "authentication_error", "message": "Invalid API key"}}`,
+			expectedError: "API error",
+		},
+		{
+			name:          "server error",
+			statusCode:    500,
+			responseBody:  "Internal Server Error",
+			expectedError: "API error",
+		},
+		{
+			name:          "model not found",
+			statusCode:    404,
+			responseBody:  `{"type": "error", "error": {"type": "not_found_error", "message": "Model not found"}}`,
+			expectedError: "API error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			config := &types.AIConfig{
+				Provider: "claude",
+				APIKey:   "test-key",
+				BaseURL:  server.URL,
+				Model:    "claude-3-sonnet-20240229",
+			}
+
+			client, err := NewClaudeClient(config)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ctx := context.Background()
+			prompt := "Hello {{name}}"
+			variablesJSON := `{"name": "Alice"}`
+
+			_, err = client.CallWithPromptAndVariables(ctx, prompt, variablesJSON)
+
+			if err == nil {
+				t.Errorf("Expected error for status code %d", tt.statusCode)
+				return
+			}
+
+			if !strings.Contains(strings.ToLower(err.Error()), strings.ToLower(tt.expectedError)) {
+				t.Errorf("Expected error to contain '%s', got: %s", tt.expectedError, err.Error())
+			}
+		})
 	}
 }
 
