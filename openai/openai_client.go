@@ -228,6 +228,23 @@ func (c *OpenAIClient) CallWithPrompt(ctx context.Context, prompt string) ([]byt
 	return resp.Body, nil
 }
 
+// CallWithPromptAndVariables calls the OpenAI API with variable substitution
+func (c *OpenAIClient) CallWithPromptAndVariables(ctx context.Context, prompt string, variablesJSON string) ([]byte, error) {
+	c.logger.Info("Processing prompt with variables for OpenAI API")
+
+	// Substitute variables in the prompt
+	processedPrompt, err := utils.SubstituteVariables(prompt, variablesJSON)
+	if err != nil {
+		c.logger.Error("Variable substitution failed: %v", err)
+		return nil, fmt.Errorf("variable substitution failed: %w", err)
+	}
+
+	c.logger.Debug("Variables substituted successfully, calling OpenAI API")
+
+	// Call the existing CallWithPrompt method with the processed prompt
+	return c.CallWithPrompt(ctx, processedPrompt)
+}
+
 // GenerateCompletion generates code completion using OpenAI API
 func (c *OpenAIClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
 	c.logger.Info("Generating completion for language: %s", req.Language)

@@ -14,6 +14,7 @@ import (
 // AIClient defines the interface for AI service clients
 type AIClient interface {
 	CallWithPrompt(ctx context.Context, prompt string) ([]byte, error)
+	CallWithPromptAndVariables(ctx context.Context, prompt string, variablesJSON string) ([]byte, error)
 	GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error)
 	GenerateCode(ctx context.Context, req types.CodeGenerationRequest) (*types.CodeGenerationResponse, error)
 	ValidateCredentials(ctx context.Context) error

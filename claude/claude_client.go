@@ -165,6 +165,23 @@ func (c *ClaudeClient) ValidateCredentials(ctx context.Context) error {
 	return nil
 }
 
+// CallWithPromptAndVariables calls the Claude API with variable substitution
+func (c *ClaudeClient) CallWithPromptAndVariables(ctx context.Context, prompt string, variablesJSON string) ([]byte, error) {
+	c.logger.Info("Processing prompt with variables for Claude API")
+
+	// Substitute variables in the prompt
+	processedPrompt, err := utils.SubstituteVariables(prompt, variablesJSON)
+	if err != nil {
+		c.logger.Error("Variable substitution failed: %v", err)
+		return nil, fmt.Errorf("variable substitution failed: %w", err)
+	}
+
+	c.logger.Debug("Variables substituted successfully, calling Claude API")
+
+	// Call the existing CallWithPrompt method with the processed prompt
+	return c.CallWithPrompt(ctx, processedPrompt)
+}
+
 // CallWithPrompt calls the Claude API
 func (c *ClaudeClient) CallWithPrompt(ctx context.Context, prompt string) ([]byte, error) {
 	messages := []ClaudeMessage{
