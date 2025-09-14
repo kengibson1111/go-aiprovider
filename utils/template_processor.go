@@ -7,20 +7,62 @@ import (
 	"regexp"
 )
 
-// Template processing errors
+// Template processing errors define specific error conditions for variable substitution
 var (
-	ErrInvalidJSON   = errors.New("invalid JSON format in variables")
+	// ErrInvalidJSON is returned when the variables JSON string cannot be parsed
+	ErrInvalidJSON = errors.New("invalid JSON format in variables")
+
+	// ErrEmptyTemplate is returned when an empty template string is provided
 	ErrEmptyTemplate = errors.New("template cannot be empty")
 )
 
-// variablePattern matches {{variable_name}} format
-// Variable names can contain letters, numbers, underscores, and hyphens
+// variablePattern is a compiled regular expression that matches variable placeholders
+// in the format {{variable_name}}. The pattern captures:
+//   - Opening double braces: {{
+//   - Variable name: ([a-zA-Z0-9_-]+) - letters, numbers, underscores, hyphens
+//   - Closing double braces: }}
+//
+// The captured group (parentheses) extracts just the variable name without braces,
+// enabling easy replacement of the entire {{variable_name}} with its value.
 var variablePattern = regexp.MustCompile(`\{\{([a-zA-Z0-9_-]+)\}\}`)
 
-// SubstituteVariables replaces variables in template with values from JSON string
-// Variables in template should be in format {{variable_name}}
-// Variables JSON should be a valid JSON object with string keys and values
-// Returns processed template string or error if JSON is malformed
+// SubstituteVariables replaces variables in template with values from JSON string.
+//
+// This function enables prompt template functionality by substituting placeholder variables
+// with actual values. Variables in the template must use the {{variable_name}} format.
+//
+// Variable Format:
+//   - Variables must be enclosed in double curly braces: {{variable_name}}
+//   - Variable names can contain letters, numbers, underscores, and hyphens
+//   - Variable names are case-sensitive
+//   - Nested braces (e.g., {{{variable}}}) are not supported and will be ignored
+//
+// Variables JSON Format:
+//   - Must be a valid JSON object with string keys matching variable names
+//   - Values can be strings, numbers, booleans, or null (all converted to strings)
+//   - Empty object {} is valid (no substitutions performed)
+//   - null or empty string results in no substitutions
+//
+// Behavior:
+//   - Variables with matching JSON keys are replaced with their values
+//   - Variables without matching keys remain unchanged in the template
+//   - All JSON values are converted to their string representation
+//   - Processing is done in reverse order to handle overlapping replacements correctly
+//
+// Parameters:
+//   - template: The template string containing variables in {{variable_name}} format
+//   - variablesJSON: JSON string containing variable name-value pairs
+//
+// Returns:
+//   - Processed template string with variables substituted
+//   - Error if template is empty or JSON is malformed
+//
+// Example:
+//
+//	template := "Hello {{name}}, welcome to {{platform}}!"
+//	variables := `{"name": "Alice", "platform": "Go AI Provider"}`
+//	result, err := SubstituteVariables(template, variables)
+//	// result: "Hello Alice, welcome to Go AI Provider!"
 func SubstituteVariables(template string, variablesJSON string) (string, error) {
 	// Handle empty template
 	if template == "" {

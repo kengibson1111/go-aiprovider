@@ -228,11 +228,34 @@ func (c *OpenAIClient) CallWithPrompt(ctx context.Context, prompt string) ([]byt
 	return resp.Body, nil
 }
 
-// CallWithPromptAndVariables calls the OpenAI API with variable substitution
+// CallWithPromptAndVariables calls the OpenAI API with variable substitution.
+//
+// This method implements the prompt template functionality by:
+// 1. Substituting variables in the prompt template using utils.SubstituteVariables
+// 2. Calling the existing CallWithPrompt method with the processed prompt
+// 3. Returning the same response format as CallWithPrompt
+//
+// The method maintains consistency with the existing OpenAI client patterns for
+// error handling, logging, and response processing.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeouts
+//   - prompt: Template string with variables in {{variable_name}} format
+//   - variablesJSON: JSON string containing variable name-value pairs
+//
+// Returns:
+//   - Raw response bytes from OpenAI API
+//   - Error if variable substitution fails or API call fails
+//
+// Example:
+//
+//	prompt := "You are a {{role}} assistant. Help with {{task}} in {{language}}."
+//	variables := `{"role": "senior developer", "task": "code review", "language": "Go"}`
+//	response, err := client.CallWithPromptAndVariables(ctx, prompt, variables)
 func (c *OpenAIClient) CallWithPromptAndVariables(ctx context.Context, prompt string, variablesJSON string) ([]byte, error) {
 	c.logger.Info("Processing prompt with variables for OpenAI API")
 
-	// Substitute variables in the prompt
+	// Substitute variables in the prompt using the template processor utility
 	processedPrompt, err := utils.SubstituteVariables(prompt, variablesJSON)
 	if err != nil {
 		c.logger.Error("Variable substitution failed: %v", err)
@@ -242,6 +265,7 @@ func (c *OpenAIClient) CallWithPromptAndVariables(ctx context.Context, prompt st
 	c.logger.Debug("Variables substituted successfully, calling OpenAI API")
 
 	// Call the existing CallWithPrompt method with the processed prompt
+	// This ensures consistent behavior with direct prompt calls
 	return c.CallWithPrompt(ctx, processedPrompt)
 }
 
