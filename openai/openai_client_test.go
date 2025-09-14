@@ -1011,6 +1011,354 @@ func TestOpenAIClient_GenerateCode_Integration(t *testing.T) {
 	}
 }
 
+func TestOpenAIClient_CallWithPromptAndVariables(t *testing.T) {
+	tests := []struct {
+		name           string
+		prompt         string
+		variablesJSON  string
+		mockResponse   string
+		mockStatusCode int
+		expectError    bool
+		errorContains  string
+		expectedPrompt string // The prompt we expect to be sent to CallWithPrompt
+	}{
+		{
+			name:           "successful variable substitution",
+			prompt:         "Hello {{name}}, please review this {{language}} code.",
+			variablesJSON:  `{"name": "Alice", "language": "Go"}`,
+			mockResponse:   `{"choices": [{"message": {"content": "Review completed"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Hello Alice, please review this Go code.",
+		},
+		{
+			name:           "multiple variables in template",
+			prompt:         "Task: {{task}} for {{user}} in {{language}} with priority {{priority}}",
+			variablesJSON:  `{"task": "code review", "user": "Bob", "language": "JavaScript", "priority": "high"}`,
+			mockResponse:   `{"choices": [{"message": {"content": "Task assigned"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Task: code review for Bob in JavaScript with priority high",
+		},
+		{
+			name:           "missing variables remain unchanged",
+			prompt:         "Hello {{name}}, missing {{unknown}} variable",
+			variablesJSON:  `{"name": "Charlie"}`,
+			mockResponse:   `{"choices": [{"message": {"content": "Hello response"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Hello Charlie, missing {{unknown}} variable",
+		},
+		{
+			name:           "empty variables JSON",
+			prompt:         "No variables here",
+			variablesJSON:  `{}`,
+			mockResponse:   `{"choices": [{"message": {"content": "No variables response"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "No variables here",
+		},
+		{
+			name:           "null variables JSON",
+			prompt:         "Template with {{var}}",
+			variablesJSON:  "",
+			mockResponse:   `{"choices": [{"message": {"content": "Null response"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "Template with {{var}}",
+		},
+		{
+			name:          "malformed JSON error",
+			prompt:        "Hello {{name}}",
+			variablesJSON: `{"name": "Alice"`, // Missing closing brace
+			expectError:   true,
+			errorContains: "variable substitution failed",
+		},
+		{
+			name:          "empty template error",
+			prompt:        "",
+			variablesJSON: `{"name": "Alice"}`,
+			expectError:   true,
+			errorContains: "variable substitution failed",
+		},
+		{
+			name:           "API error propagation",
+			prompt:         "Hello {{name}}",
+			variablesJSON:  `{"name": "Alice"}`,
+			mockResponse:   `{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}`,
+			mockStatusCode: 429,
+			expectError:    true,
+			errorContains:  "rate limit exceeded",
+			expectedPrompt: "Hello Alice",
+		},
+		{
+			name:           "special characters in variables",
+			prompt:         "User: {{user_name}}, Email: {{email-address}}",
+			variablesJSON:  `{"user_name": "John Doe", "email-address": "john@example.com"}`,
+			mockResponse:   `{"choices": [{"message": {"content": "User processed"}, "finish_reason": "stop"}]}`,
+			mockStatusCode: 200,
+			expectError:    false,
+			expectedPrompt: "User: John Doe, Email: john@example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualPromptSent string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Capture the prompt that was actually sent
+				var reqBody OpenAIRequest
+				if err := json.NewDecoder(r.Body).Decode(&reqBody); err == nil {
+					if len(reqBody.Messages) > 0 {
+						actualPromptSent = reqBody.Messages[0].Content
+					}
+				}
+
+				w.WriteHeader(tt.mockStatusCode)
+				w.Write([]byte(tt.mockResponse))
+			}))
+			defer server.Close()
+
+			config := &types.AIConfig{
+				Provider: "openai",
+				APIKey:   "test-key",
+				BaseURL:  server.URL,
+				Model:    "gpt-3.5-turbo",
+			}
+
+			client, err := NewOpenAIClient(config)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ctx := context.Background()
+			resp, err := client.CallWithPromptAndVariables(ctx, tt.prompt, tt.variablesJSON)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				if !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("Expected error to contain '%s', got: %s", tt.errorContains, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if len(resp) == 0 {
+				t.Errorf("Expected non-empty response")
+				return
+			}
+
+			// Verify the correct processed prompt was sent to the API
+			if tt.expectedPrompt != "" && actualPromptSent != tt.expectedPrompt {
+				t.Errorf("Expected prompt '%s' to be sent to API, but got '%s'", tt.expectedPrompt, actualPromptSent)
+			}
+
+			// Verify response is valid JSON
+			var openaiResp OpenAIResponse
+			if err := json.Unmarshal(resp, &openaiResp); err != nil {
+				t.Errorf("Failed to unmarshal response: %v", err)
+			}
+		})
+	}
+}
+
+func TestOpenAIClient_CallWithPromptAndVariables_ContextCancellation(t *testing.T) {
+	// Create a server that delays response to test context cancellation
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond) // Delay to allow context cancellation
+		w.WriteHeader(200)
+		w.Write([]byte(`{"choices": [{"message": {"content": "test"}, "finish_reason": "stop"}]}`))
+	}))
+	defer server.Close()
+
+	config := &types.AIConfig{
+		Provider: "openai",
+		APIKey:   "test-key",
+		BaseURL:  server.URL,
+		Model:    "gpt-3.5-turbo",
+	}
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Create a context that will be cancelled
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	prompt := "Hello {{name}}"
+	variablesJSON := `{"name": "Alice"}`
+
+	_, err = client.CallWithPromptAndVariables(ctx, prompt, variablesJSON)
+
+	if err == nil {
+		t.Errorf("Expected context cancellation error")
+	}
+
+	if !strings.Contains(err.Error(), "context") && !strings.Contains(err.Error(), "timeout") && !strings.Contains(err.Error(), "deadline") {
+		t.Errorf("Expected context-related error, got: %v", err)
+	}
+}
+
+func TestOpenAIClient_CallWithPromptAndVariables_ErrorPropagation(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectedError string
+	}{
+		{
+			name:          "rate limit error",
+			statusCode:    429,
+			responseBody:  `{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}`,
+			expectedError: "rate limit exceeded",
+		},
+		{
+			name:          "invalid API key",
+			statusCode:    401,
+			responseBody:  `{"error": {"message": "Invalid API key", "type": "invalid_request_error"}}`,
+			expectedError: "API error",
+		},
+		{
+			name:          "server error",
+			statusCode:    500,
+			responseBody:  "Internal Server Error",
+			expectedError: "API error",
+		},
+		{
+			name:          "model not found",
+			statusCode:    404,
+			responseBody:  `{"error": {"message": "Model not found", "type": "invalid_request_error"}}`,
+			expectedError: "API error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			config := &types.AIConfig{
+				Provider: "openai",
+				APIKey:   "test-key",
+				BaseURL:  server.URL,
+				Model:    "gpt-3.5-turbo",
+			}
+
+			client, err := NewOpenAIClient(config)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ctx := context.Background()
+			prompt := "Hello {{name}}"
+			variablesJSON := `{"name": "Alice"}`
+
+			_, err = client.CallWithPromptAndVariables(ctx, prompt, variablesJSON)
+
+			if err == nil {
+				t.Errorf("Expected error for status code %d", tt.statusCode)
+				return
+			}
+
+			if !strings.Contains(strings.ToLower(err.Error()), strings.ToLower(tt.expectedError)) {
+				t.Errorf("Expected error to contain '%s', got: %s", tt.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestOpenAIClient_CallWithPromptAndVariables_Integration(t *testing.T) {
+	if !utils.CanRunOpenAIIntegrationTests() {
+		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
+	}
+
+	testConfig, err := utils.LoadTestConfig()
+	if err != nil {
+		t.Fatalf("Failed to load test configuration: %v", err)
+	}
+
+	config := testConfig.CreateOpenAIConfig()
+	config.MaxTokens = 100
+	config.Temperature = 0.1
+
+	client, err := NewOpenAIClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create OpenAI client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	testCases := []struct {
+		name           string
+		prompt         string
+		variablesJSON  string
+		expectedInResp []string
+	}{
+		{
+			name:           "simple variable substitution",
+			prompt:         "What is the capital of {{country}}? Answer in one word only.",
+			variablesJSON:  `{"country": "France"}`,
+			expectedInResp: []string{"Paris"},
+		},
+		{
+			name:           "multiple variables",
+			prompt:         "Calculate {{num1}} + {{num2}}. Provide only the numerical answer.",
+			variablesJSON:  `{"num1": "15", "num2": "25"}`,
+			expectedInResp: []string{"40"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := client.CallWithPromptAndVariables(ctx, tc.prompt, tc.variablesJSON)
+
+			if err != nil {
+				t.Fatalf("CallWithPromptAndVariables failed for %s: %v", tc.name, err)
+			}
+
+			if len(resp) == 0 {
+				t.Errorf("Expected non-empty response for %s", tc.name)
+				return
+			}
+
+			// Parse the response to verify it's valid JSON
+			var openaiResp OpenAIResponse
+			if err := json.Unmarshal(resp, &openaiResp); err != nil {
+				t.Errorf("Failed to unmarshal response for %s: %v", tc.name, err)
+				return
+			}
+
+			if len(openaiResp.Choices) == 0 {
+				t.Errorf("Expected at least one choice in response for %s", tc.name)
+				return
+			}
+
+			content := openaiResp.Choices[0].Message.Content
+
+			// Check for expected content in response
+			for _, expected := range tc.expectedInResp {
+				if !strings.Contains(content, expected) {
+					t.Errorf("Expected response for %s to contain '%s', but got: %s",
+						tc.name, expected, content)
+				}
+			}
+
+			t.Logf("Response for %s: %s", tc.name, content)
+		})
+	}
+}
+
 func TestOpenAIClient_EndpointConfiguration_Integration(t *testing.T) {
 	if !utils.CanRunOpenAIIntegrationTests() {
 		t.Skip("Skipping OpenAI integration test: OPENAI_API_KEY environment variable not set")
