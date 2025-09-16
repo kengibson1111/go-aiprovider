@@ -62,7 +62,7 @@ func (c *BaseHTTPClient) DoRequest(ctx context.Context, req HTTPRequest) (*HTTPR
 
 	// Set default headers
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("User-Agent", "VSCode-Assist/1.0")
+	httpReq.Header.Set("User-Agent", "Go-AIProvider/1.0")
 
 	// Set custom headers
 	for key, value := range req.Headers {

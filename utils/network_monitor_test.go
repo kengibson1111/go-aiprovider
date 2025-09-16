@@ -433,8 +433,8 @@ func TestNetworkMonitor_checkEndpoint(t *testing.T) {
 		}
 
 		userAgent := lastReq.Header.Get("User-Agent")
-		if !strings.Contains(userAgent, "VSCode-Assist-NetworkCheck") {
-			t.Errorf("Expected User-Agent to contain VSCode-Assist-NetworkCheck, got %s", userAgent)
+		if !strings.Contains(userAgent, "Go-AIProvider-NetworkCheck") {
+			t.Errorf("Expected User-Agent to contain Go-AIProvider-NetworkCheck, got %s", userAgent)
 		}
 	})
 

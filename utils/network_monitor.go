@@ -155,7 +155,7 @@ func (nm *NetworkMonitor) checkEndpoint(ctx context.Context, endpoint string) bo
 	}
 
 	// Set minimal headers to avoid authentication issues
-	req.Header.Set("User-Agent", "VSCode-Assist-NetworkCheck/1.0")
+	req.Header.Set("User-Agent", "Go-AIProvider-NetworkCheck/1.0")
 
 	resp, err := nm.httpClient.Do(req)
 	if err != nil {
@@ -279,7 +279,7 @@ func (nm *NetworkMonitor) TestEndpointConnectivity(ctx context.Context, endpoint
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "VSCode-Assist-NetworkTest/1.0")
+	req.Header.Set("User-Agent", "Go-AIProvider-NetworkTest/1.0")
 
 	client := &http.Client{Timeout: timeout}
 	resp, err := client.Do(req)

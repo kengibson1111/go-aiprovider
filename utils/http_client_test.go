@@ -124,8 +124,8 @@ func TestDoRequestSuccess(t *testing.T) {
 		t.Errorf("Expected Content-Type to be application/json")
 	}
 
-	if lastReq.Header.Get("User-Agent") != "VSCode-Assist/1.0" {
-		t.Errorf("Expected User-Agent to be VSCode-Assist/1.0")
+	if lastReq.Header.Get("User-Agent") != "Go-AIProvider/1.0" {
+		t.Errorf("Expected User-Agent to be Go-AIProvider/1.0")
 	}
 }
 
@@ -565,8 +565,8 @@ func TestDoRequestWithCustomHeaders(t *testing.T) {
 	}
 
 	// Check that User-Agent is still set
-	if lastReq.Header.Get("User-Agent") != "VSCode-Assist/1.0" {
-		t.Errorf("Expected User-Agent 'VSCode-Assist/1.0', got '%s'", lastReq.Header.Get("User-Agent"))
+	if lastReq.Header.Get("User-Agent") != "Go-AIProvider/1.0" {
+		t.Errorf("Expected User-Agent 'Go-AIProvider/1.0', got '%s'", lastReq.Header.Get("User-Agent"))
 	}
 }
 
