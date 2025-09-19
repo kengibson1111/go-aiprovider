@@ -76,7 +76,7 @@ func TestAIConfig(t *testing.T) {
 			Provider:    "openai",
 			APIKey:      "sk-test123",
 			BaseURL:     "https://api.openai.com/v1",
-			Model:       "gpt-3.5-turbo",
+			Model:       "gpt-4o-mini",
 			MaxTokens:   1000,
 			Temperature: 0.7,
 		}
@@ -86,7 +86,7 @@ func TestAIConfig(t *testing.T) {
 			t.Fatalf("Failed to marshal AIConfig: %v", err)
 		}
 
-		expected := `{"provider":"openai","apiKey":"sk-test123","baseUrl":"https://api.openai.com/v1","model":"gpt-3.5-turbo","maxTokens":1000,"temperature":0.7}`
+		expected := `{"provider":"openai","apiKey":"sk-test123","baseUrl":"https://api.openai.com/v1","model":"gpt-4o-mini","maxTokens":1000,"temperature":0.7}`
 		if string(data) != expected {
 			t.Errorf("Expected %s, got %s", expected, string(data))
 		}
@@ -617,7 +617,7 @@ func TestStructValidation(t *testing.T) {
 		validConfig := AIConfig{
 			Provider:    "openai",
 			APIKey:      "sk-test123",
-			Model:       "gpt-3.5-turbo",
+			Model:       "gpt-4o-mini",
 			MaxTokens:   1000,
 			Temperature: 0.7,
 		}

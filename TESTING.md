@@ -36,7 +36,7 @@ This project uses two distinct types of tests:
 
    # OpenAI Configuration  
    OPENAI_API_KEY=your_actual_openai_api_key_here
-   OPENAI_MODEL=gpt-3.5-turbo
+   OPENAI_MODEL=gpt-4o-mini
    ```
 
 3. Verify the `.env` file is ignored by git (already configured in `.gitignore`)

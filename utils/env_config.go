@@ -171,7 +171,7 @@ func LoadTestConfig() (*TestConfig, error) {
 		ClaudeModel:       GetEnvVar(ClaudeModelEnv, "claude-3-sonnet-20240229"),
 		ClaudeAPIEndpoint: os.Getenv(ClaudeAPIEndpointEnv),
 		OpenAIAPIKey:      os.Getenv(OpenAIAPIKeyEnv),
-		OpenAIModel:       GetEnvVar(OpenAIModelEnv, "gpt-3.5-turbo"),
+		OpenAIModel:       GetEnvVar(OpenAIModelEnv, "gpt-4o-mini"),
 		OpenAIAPIEndpoint: os.Getenv(OpenAIAPIEndpointEnv),
 	}
 
@@ -221,9 +221,9 @@ func (tc *TestConfig) CreateClaudeConfig() *types.AIConfig {
 // CreateOpenAIConfig creates an AIConfig for OpenAI from TestConfig
 // Uses OpenAIAPIEndpoint if valid, otherwise falls back to default endpoint
 func (tc *TestConfig) CreateOpenAIConfig() *types.AIConfig {
-	baseURL := "https://api.openai.com"
+	var baseURL string
 
-	// Use custom endpoint if it's valid
+	// Use custom endpoint if it's valid, otherwise leave empty to use SDK default
 	if tc.OpenAIAPIEndpoint != "" && ValidateEndpointURL(tc.OpenAIAPIEndpoint) == nil {
 		baseURL = tc.OpenAIAPIEndpoint
 	}

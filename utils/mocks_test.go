@@ -422,7 +422,7 @@ func TestTestHelpers_SpecialResponses(t *testing.T) {
 		t.Error("Expected OpenAI response to contain the message")
 	}
 
-	if !strings.Contains(string(openaiResp.Body), "gpt-3.5-turbo") {
+	if !strings.Contains(string(openaiResp.Body), "gpt-4o-mini") {
 		t.Error("Expected OpenAI response to contain model name")
 	}
 

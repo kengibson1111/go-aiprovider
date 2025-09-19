@@ -52,7 +52,7 @@ func createValidOpenAIConfig() *types.AIConfig {
 		Provider:    "openai",
 		APIKey:      "test-api-key",
 		BaseURL:     "https://api.openai.com",
-		Model:       "gpt-3.5-turbo",
+		Model:       "gpt-4o-mini",
 		MaxTokens:   1000,
 		Temperature: 0.7,
 	}
@@ -255,7 +255,7 @@ func TestClientFactory_CreateClient_ConfigValidation(t *testing.T) {
 			config: &types.AIConfig{
 				Provider:    "openai",
 				APIKey:      "test-key",
-				Model:       "gpt-3.5-turbo",
+				Model:       "gpt-4o-mini",
 				MaxTokens:   1000,
 				Temperature: 0.7,
 			},
@@ -299,7 +299,7 @@ func TestClientFactory_CreateClient_ConfigValidation(t *testing.T) {
 			config: &types.AIConfig{
 				Provider:    "openai",
 				APIKey:      "test-key",
-				Model:       "gpt-3.5-turbo",
+				Model:       "gpt-4o-mini",
 				MaxTokens:   1000,
 				Temperature: 0,
 			},
@@ -397,7 +397,7 @@ func TestClientFactory_CreateClient_AllProviders(t *testing.T) {
 		model    string
 	}{
 		{"Claude", "claude", "https://api.anthropic.com", "claude-3-sonnet-20240229"},
-		{"OpenAI", "openai", "https://api.openai.com", "gpt-3.5-turbo"},
+		{"OpenAI", "openai", "https://api.openai.com", "gpt-4o-mini"},
 	}
 
 	for _, p := range providers {

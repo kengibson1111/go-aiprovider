@@ -121,7 +121,7 @@ func TestInterfaceCompliance(t *testing.T) {
 		Provider: "openai",
 		APIKey:   "test-key",
 		BaseURL:  openaiServer.URL,
-		Model:    "gpt-3.5-turbo",
+		Model:    "gpt-4o-mini",
 	}
 
 	claudeConfig := &types.AIConfig{
@@ -353,18 +353,30 @@ type clientTestResult struct {
 	processedPrompt string
 }
 
+// OpenAIRequest represents the structure of an OpenAI API request for testing
+type OpenAIRequest struct {
+	Model    string `json:"model"`
+	Messages []struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	} `json:"messages"`
+	MaxTokens   int     `json:"max_tokens"`
+	Temperature float64 `json:"temperature"`
+}
+
 // testOpenAIClient tests the OpenAI client with given inputs
 func testOpenAIClient(t *testing.T, prompt, variablesJSON string, expectError bool, errorContains string) clientTestResult {
 	var actualPromptSent string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Capture the prompt that was actually sent
-		var reqBody openai.OpenAIRequest
+		var reqBody OpenAIRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err == nil {
 			if len(reqBody.Messages) > 0 {
 				actualPromptSent = reqBody.Messages[0].Content
 			}
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
 		w.Write([]byte(`{"choices": [{"message": {"content": "test response"}, "finish_reason": "stop"}]}`))
 	}))
@@ -374,7 +386,7 @@ func testOpenAIClient(t *testing.T, prompt, variablesJSON string, expectError bo
 		Provider: "openai",
 		APIKey:   "test-key",
 		BaseURL:  server.URL,
-		Model:    "gpt-3.5-turbo",
+		Model:    "gpt-4o-mini",
 	}
 
 	client, err := openai.NewOpenAIClient(config)
@@ -397,18 +409,29 @@ func testOpenAIClient(t *testing.T, prompt, variablesJSON string, expectError bo
 	return result
 }
 
+// ClaudeRequest represents the structure of a Claude API request for testing
+type ClaudeRequest struct {
+	Model    string `json:"model"`
+	Messages []struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	} `json:"messages"`
+	MaxTokens int `json:"max_tokens"`
+}
+
 // testClaudeClient tests the Claude client with given inputs
 func testClaudeClient(t *testing.T, prompt, variablesJSON string, expectError bool, errorContains string) clientTestResult {
 	var actualPromptSent string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Capture the prompt that was actually sent
-		var reqBody claude.ClaudeRequest
+		var reqBody ClaudeRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err == nil {
 			if len(reqBody.Messages) > 0 {
 				actualPromptSent = reqBody.Messages[0].Content
 			}
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
 		w.Write([]byte(`{"id": "msg_test", "type": "message", "role": "assistant", "content": [{"type": "text", "text": "test response"}], "model": "claude-3-sonnet-20240229", "stop_reason": "end_turn"}`))
 	}))
@@ -444,14 +467,15 @@ func testClaudeClient(t *testing.T, prompt, variablesJSON string, expectError bo
 // createMockOpenAIServer creates a mock server that responds like OpenAI API
 func createMockOpenAIServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/v1/chat/completions":
+		case "/chat/completions":
 			w.WriteHeader(200)
 			w.Write([]byte(`{
 				"id": "chatcmpl-test",
 				"object": "chat.completion",
 				"created": 1234567890,
-				"model": "gpt-3.5-turbo",
+				"model": "gpt-4o-mini",
 				"choices": [
 					{
 						"index": 0,
@@ -461,10 +485,16 @@ func createMockOpenAIServer() *httptest.Server {
 						},
 						"finish_reason": "stop"
 					}
-				]
+				],
+				"usage": {
+					"prompt_tokens": 10,
+					"completion_tokens": 5,
+					"total_tokens": 15
+				}
 			}`))
 		default:
 			w.WriteHeader(404)
+			w.Write([]byte(`{"error": {"message": "Not found", "type": "invalid_request_error"}}`))
 		}
 	}))
 }
@@ -516,7 +546,7 @@ func TestContextHandlingConsistency(t *testing.T) {
 		Provider: "openai",
 		APIKey:   "test-key",
 		BaseURL:  openaiServer.URL,
-		Model:    "gpt-3.5-turbo",
+		Model:    "gpt-4o-mini",
 	}
 
 	claudeConfig := &types.AIConfig{

@@ -142,7 +142,7 @@ func (th *TestHelpers) CreateMockOpenAIResponse(content string) *HTTPResponse {
 		"id": "chatcmpl-test123",
 		"object": "chat.completion",
 		"created": 1677652288,
-		"model": "gpt-3.5-turbo",
+		"model": "gpt-4o-mini",
 		"choices": [
 			{
 				"index": 0,
