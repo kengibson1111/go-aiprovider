@@ -4160,8 +4160,9 @@ func TestOpenAIClient_EndpointConfiguration_NewOpenAIClient(t *testing.T) {
 	// Create client using enhanced TestConfig
 	config := testConfig.CreateOpenAIConfig()
 
-	// Verify BaseURL is properly set
-	expectedBaseURL := "https://api.openai.com"
+	// Verify BaseURL is properly set. OpenAI has a default base URL, so the
+	// API endpoint set in an environment variable is optional.
+	expectedBaseURL := ""
 	if testConfig.OpenAIAPIEndpoint != "" {
 		// If custom endpoint is set and valid, it should be used
 		if err := utils.ValidateEndpointURL(testConfig.OpenAIAPIEndpoint); err == nil {
