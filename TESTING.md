@@ -56,13 +56,15 @@ Run unit tests without building executables:
 
 ```bash
 # Run all unit tests (fast, no external dependencies)
-go test -short -timeout 60s ./...
+go test -short -timeout 120s ./...
 
 # Run unit tests with verbose output
-go test -short -timeout 60s -v ./...
+go test -short -timeout 120s -v ./...
 
 # Run unit tests for a specific package
-go test -short -timeout 60s ./utils/
+go test -short -timeout 120s ./utils/
+go test -short -timeout 120s ./openai/
+go test -short ./claude/
 go test -short ./types/
 go test -short ./client/
 ```
@@ -89,10 +91,10 @@ Run both unit and integration tests:
 
 ```bash
 # Run all tests (unit + integration)
-go test -timeout 60s ./...
+go test -timeout 120s ./...
 
 # Run all tests with verbose output
-go test -timeout 60s -v ./...
+go test -timeout 120s -v ./...
 ```
 
 ## Test Coverage
@@ -103,7 +105,7 @@ Generate test coverage without creating executables:
 
 ```bash
 # Generate coverage profile
-go test -short -timeout 60s -coverprofile=coverage.out ./...
+go test -short -timeout 120s -coverprofile=coverage.out ./...
 
 # View coverage in terminal
 go tool cover -func=coverage.out
@@ -150,12 +152,12 @@ go test -short ./types/
 
 ```bash
 # All utils unit tests
-go test -short -timeout 60s ./utils/
+go test -short -timeout 120s ./utils/
 
 # Specific utility tests
-go test -short -timeout 60s -run TestHTTPClient ./utils/
+go test -short -timeout 120s -run TestHTTPClient ./utils/
 go test -short -run TestLogger ./utils/
-go test -short -timeout 60s -run TestNetworkMonitor ./utils/
+go test -short -timeout 120s -run TestNetworkMonitor ./utils/
 ```
 
 ### Provider Integration Tests
@@ -165,7 +167,7 @@ go test -short -timeout 60s -run TestNetworkMonitor ./utils/
 go test -run Integration ./claude/
 
 # OpenAI integration tests (requires OPENAI_API_KEY)
-go test -run Integration ./openai/
+go test -timeout 120s -run Integration ./openai/
 ```
 
 ## Troubleshooting
