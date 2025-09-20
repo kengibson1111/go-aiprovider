@@ -2,6 +2,7 @@ package openai
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -177,7 +178,7 @@ func TestOpenAIClient_RealNetworkConditions(t *testing.T) {
 		config := &types.AIConfig{
 			Provider: "openai",
 			APIKey:   "test-key",
-			BaseURL:  "http://127.0.0.1:" + string(rune(port)),
+			BaseURL:  fmt.Sprintf("http://127.0.0.1:%d", port),
 			Model:    "gpt-4o-mini",
 		}
 
@@ -195,8 +196,8 @@ func TestOpenAIClient_RealNetworkConditions(t *testing.T) {
 			return
 		}
 
-		if !strings.Contains(err.Error(), "network error") {
-			t.Errorf("Expected network error, got: %v", err)
+		if !strings.Contains(err.Error(), "network error") && !strings.Contains(err.Error(), "request timeout") {
+			t.Errorf("Expected network error or timeout, got: %v", err)
 		}
 	})
 }

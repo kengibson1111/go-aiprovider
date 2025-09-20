@@ -260,8 +260,8 @@ func TestOpenAIClient_ValidateCredentials(t *testing.T) {
 				if r.Method != "POST" {
 					t.Errorf("Expected POST request, got: %s", r.Method)
 				}
-				if r.URL.Path != "/v1/chat/completions" {
-					t.Errorf("Expected path '/v1/chat/completions', got: %s", r.URL.Path)
+				if r.URL.Path != "/chat/completions" {
+					t.Errorf("Expected path '/chat/completions', got: %s", r.URL.Path)
 				}
 				if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
 					t.Errorf("Expected Authorization header with Bearer token")
@@ -3051,8 +3051,14 @@ func TestOpenAIClient_CallWithMessages_LoggingBehavior(t *testing.T) {
 
 func TestOpenAIClient_RateLimitHandling(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(429)
-		w.Write([]byte(`{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}`))
+		// Handle both /chat/completions and /v1/chat/completions paths
+		if r.URL.Path == "/chat/completions" || r.URL.Path == "/v1/chat/completions" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(429)
+			w.Write([]byte(`{"error": {"message": "Rate limit exceeded", "type": "rate_limit_error", "code": "rate_limit_exceeded"}}`))
+		} else {
+			w.WriteHeader(404)
+		}
 	}))
 	defer server.Close()
 

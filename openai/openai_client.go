@@ -510,7 +510,8 @@ func (c *OpenAIClient) ValidateCredentials(ctx context.Context) error {
 
 	_, err := c.client.Chat().Completions().New(ctx, params)
 	if err != nil {
-		c.logger.Error("Credential validation failed: %v", err)
+		// Safely log the error without triggering potential nil pointer dereference
+		c.logger.Error("Credential validation failed: %s", c.safeErrorString(err))
 		return c.handleSDKError(err)
 	}
 
@@ -614,7 +615,7 @@ func (c *OpenAIClient) callWithPrompt(ctx context.Context, prompt string) (*open
 
 	completion, err := c.client.Chat().Completions().New(ctx, params)
 	if err != nil {
-		c.logger.Error("Completion request failed: %v", err)
+		c.logger.Error("Completion request failed: %s", c.safeErrorString(err))
 		return nil, c.handleSDKError(err)
 	}
 
@@ -660,7 +661,7 @@ func (c *OpenAIClient) CallWithMessages(ctx context.Context, messages []openai.C
 
 	completion, err := c.client.Chat().Completions().New(ctx, params)
 	if err != nil {
-		c.logger.Error("Conversation completion request failed: %v", err)
+		c.logger.Error("Conversation completion request failed: %s", c.safeErrorString(err))
 		return nil, c.handleSDKError(err)
 	}
 
@@ -725,7 +726,7 @@ func (c *OpenAIClient) CallWithTools(ctx context.Context, prompt string, tools [
 
 	completion, err := c.client.Chat().Completions().New(ctx, params)
 	if err != nil {
-		c.logger.Error("Function calling completion request failed: %v", err)
+		c.logger.Error("Function calling completion request failed: %s", c.safeErrorString(err))
 		return nil, c.handleSDKError(err)
 	}
 
@@ -797,7 +798,7 @@ func (c *OpenAIClient) CallWithPromptStream(ctx context.Context, prompt string) 
 
 	// Check for immediate errors in stream setup
 	if err := stream.Err(); err != nil {
-		c.logger.Error("Streaming completion request failed: %v", err)
+		c.logger.Error("Streaming completion request failed: %s", c.safeErrorString(err))
 		return nil, c.handleStreamingError(err)
 	}
 
@@ -883,7 +884,7 @@ func (c *OpenAIClient) callWithPromptAndVariables(ctx context.Context, prompt st
 	// Substitute variables in the prompt using the template processor utility
 	processedPrompt, err := utils.SubstituteVariables(prompt, variablesJSON)
 	if err != nil {
-		c.logger.Error("Variable substitution failed: %v", err)
+		c.logger.Error("Variable substitution failed: %s", c.safeErrorString(err))
 		return nil, fmt.Errorf("variable substitution failed: %w", err)
 	}
 
@@ -1384,7 +1385,21 @@ func (c *OpenAIClient) handleSDKError(err error) error {
 // This method showcases SDK integration by using native error types (openai.Error)
 // with their Code, Type, and Message fields for precise error handling.
 func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error {
-	c.logger.Error("OpenAI API error - Code: %s, Type: %s, Message: %s", apiErr.Code, apiErr.Type, apiErr.Message)
+	// Safely log the error details, handling potential nil values
+	code := ""
+	errorType := ""
+	message := ""
+	if apiErr != nil {
+		code = apiErr.Code
+		errorType = apiErr.Type
+		message = apiErr.Message
+	}
+	c.logger.Error("OpenAI API error - Code: %s, Type: %s, Message: %s", code, errorType, message)
+
+	// Handle nil apiErr case
+	if apiErr == nil {
+		return fmt.Errorf("OpenAI API error: unknown error occurred")
+	}
 
 	// Handle errors by code first (most specific)
 	if apiErr.Code != "" {
@@ -1444,6 +1459,33 @@ func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error
 
 	// Last resort fallback - this might be a server error without message
 	return fmt.Errorf("OpenAI server error: HTTP 500 - please try again later")
+}
+
+// safeErrorString safely converts an error to a string, handling potential nil pointer dereferences
+// that can occur when calling Error() on certain error types.
+func (c *OpenAIClient) safeErrorString(err error) string {
+	if err == nil {
+		return "nil error"
+	}
+
+	// Use a defer/recover to catch any panics during error string conversion
+	var errStr string
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				errStr = fmt.Sprintf("error string conversion panic: %v", r)
+			}
+		}()
+
+		// Try to get the error string
+		errStr = err.Error()
+	}()
+
+	if errStr == "" {
+		return "empty error message"
+	}
+
+	return errStr
 }
 
 // handleStreamingError handles streaming-specific error scenarios.
