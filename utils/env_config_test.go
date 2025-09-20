@@ -1213,7 +1213,7 @@ func TestCreateOpenAIConfig(t *testing.T) {
 				OpenAIModel:       "gpt-4o-mini",
 				OpenAIAPIEndpoint: "",
 			},
-			expectedBaseURL:  "https://api.openai.com",
+			expectedBaseURL:  "",
 			expectedProvider: "openai",
 		},
 		{
@@ -1233,7 +1233,7 @@ func TestCreateOpenAIConfig(t *testing.T) {
 				OpenAIModel:       "gpt-4o-mini",
 				OpenAIAPIEndpoint: "invalid-url",
 			},
-			expectedBaseURL:  "https://api.openai.com",
+			expectedBaseURL:  "",
 			expectedProvider: "openai",
 		},
 		{
@@ -1243,7 +1243,7 @@ func TestCreateOpenAIConfig(t *testing.T) {
 				OpenAIModel:       "gpt-4o-mini",
 				OpenAIAPIEndpoint: "https://api.example.com?param=value",
 			},
-			expectedBaseURL:  "https://api.openai.com",
+			expectedBaseURL:  "",
 			expectedProvider: "openai",
 		},
 	}

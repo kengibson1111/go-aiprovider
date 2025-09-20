@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -15,7 +14,7 @@ import (
 func ConversationExample() {
 	fmt.Println("=== Multi-turn Conversation Example ===")
 
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	// Build a conversation with system, user, and assistant messages
 	messages := []openai.ChatCompletionMessageParamUnion{
@@ -47,57 +46,59 @@ func ConversationExample() {
 func FunctionCallingExample() {
 	fmt.Println("\n=== Function Calling Example ===")
 
-	ctx := context.Background()
+	/*
+		ctx := context.Background()
 
-	// Define a weather function tool
-	weatherTool := openai.ChatCompletionToolParam{
-		Type: openai.F(openai.ChatCompletionToolTypeFunction),
-		Function: openai.F(openai.FunctionDefinitionParam{
-			Name:        openai.String("get_weather"),
-			Description: openai.String("Get current weather information for a location"),
-			Parameters: openai.F(openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"location": map[string]interface{}{
-						"type":        "string",
-						"description": "The city and state, e.g. San Francisco, CA",
+		// Define a weather function tool
+		weatherTool := openai.ChatCompletionToolParam{
+			Type: openai.F(openai.ChatCompletionToolTypeFunction),
+			Function: openai.F(openai.FunctionDefinitionParam{
+				Name:        openai.String("get_weather"),
+				Description: openai.String("Get current weather information for a location"),
+				Parameters: openai.F(openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"location": map[string]interface{}{
+							"type":        "string",
+							"description": "The city and state, e.g. San Francisco, CA",
+						},
+						"unit": map[string]interface{}{
+							"type": "string",
+							"enum": []string{"celsius", "fahrenheit"},
+						},
 					},
-					"unit": map[string]interface{}{
-						"type": "string",
-						"enum": []string{"celsius", "fahrenheit"},
-					},
-				},
-				"required": []string{"location"},
+					"required": []string{"location"},
+				}),
 			}),
-		}),
-	}
+		}
 
-	// Define a calculator function tool
-	calculatorTool := openai.ChatCompletionToolParam{
-		Type: openai.F(openai.ChatCompletionToolTypeFunction),
-		Function: openai.F(openai.FunctionDefinitionParam{
-			Name:        openai.String("calculate"),
-			Description: openai.String("Perform basic mathematical calculations"),
-			Parameters: openai.F(openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"expression": map[string]interface{}{
-						"type":        "string",
-						"description": "Mathematical expression to evaluate, e.g. '2 + 3 * 4'",
+		// Define a calculator function tool
+		calculatorTool := openai.ChatCompletionToolParam{
+			Type: openai.F(openai.ChatCompletionToolTypeFunction),
+			Function: openai.F(openai.FunctionDefinitionParam{
+				Name:        openai.String("calculate"),
+				Description: openai.String("Perform basic mathematical calculations"),
+				Parameters: openai.F(openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"expression": map[string]interface{}{
+							"type":        "string",
+							"description": "Mathematical expression to evaluate, e.g. '2 + 3 * 4'",
+						},
 					},
-				},
-				"required": []string{"expression"},
+					"required": []string{"expression"},
+				}),
 			}),
-		}),
-	}
+		}
 
-	tools := []openai.ChatCompletionToolUnionParam{weatherTool, calculatorTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calculatorTool}
 
-	fmt.Printf("Defined %d function tools:\n", len(tools))
-	fmt.Println("1. get_weather - Get weather information")
-	fmt.Println("2. calculate - Perform calculations")
+		fmt.Printf("Defined %d function tools:\n", len(tools))
+		fmt.Println("1. get_weather - Get weather information")
+		fmt.Println("2. calculate - Perform calculations")
 
-	prompt := "What's the weather like in New York and what's 15 * 24?"
+		prompt := "What's the weather like in New York and what's 15 * 24?"
+	*/
 
 	// In actual implementation:
 	// completion, err := client.CallWithTools(ctx, prompt, tools)
@@ -124,7 +125,7 @@ func FunctionCallingExample() {
 func StreamingExample() {
 	fmt.Println("\n=== Streaming Response Example ===")
 
-	ctx := context.Background()
+	//ctx := context.Background()
 	prompt := "Write a short story about a robot learning to paint, but stream the response"
 
 	fmt.Printf("Starting streaming request for: %s\n", prompt)
@@ -170,8 +171,8 @@ func StreamingExample() {
 func StreamingToWriterExample() {
 	fmt.Println("\n=== Memory-Efficient Streaming Example ===")
 
-	ctx := context.Background()
-	prompt := "Generate a long technical document about Go concurrency patterns"
+	//ctx := context.Background()
+	//prompt := "Generate a long technical document about Go concurrency patterns"
 
 	// Create a string builder to capture output
 	var output strings.Builder
@@ -215,13 +216,13 @@ func StreamingToWriterExample() {
 func ComplexConversationExample() {
 	fmt.Println("\n=== Complex Conversation Flow Example ===")
 
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	// Simulate a code review conversation
-	conversation := []openai.ChatCompletionMessageParamUnion{
-		openai.SystemMessage("You are a senior Go developer conducting a code review. Be constructive and specific."),
-		openai.UserMessage("Please review this Go function:\n\nfunc processUsers(users []User) {\n    for i := 0; i < len(users); i++ {\n        if users[i].Active {\n            fmt.Println(users[i].Name)\n        }\n    }\n}"),
-	}
+	//conversation := []openai.ChatCompletionMessageParamUnion{
+	//	openai.SystemMessage("You are a senior Go developer conducting a code review. Be constructive and specific."),
+	//	openai.UserMessage("Please review this Go function:\n\nfunc processUsers(users []User) {\n    for i := 0; i < len(users); i++ {\n        if users[i].Active {\n            fmt.Println(users[i].Name)\n        }\n    }\n}"),
+	//}
 
 	fmt.Println("Code review conversation:")
 	fmt.Println("System: Senior Go developer role")
@@ -250,20 +251,22 @@ func ComplexConversationExample() {
 func TemplateWithAdvancedFeaturesExample() {
 	fmt.Println("\n=== Template + Advanced Features Example ===")
 
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	// Template for code generation with streaming
-	template := `
-You are a {{role}} expert. Generate {{language}} code for:
+	/*
+			template := `
+		You are a {{role}} expert. Generate {{language}} code for:
 
-Task: {{task}}
-Requirements:
-{{#each requirements}}
-- {{this}}
-{{/each}}
+		Task: {{task}}
+		Requirements:
+		{{#each requirements}}
+		- {{this}}
+		{{/each}}
 
-Please provide well-commented, production-ready code.
-`
+		Please provide well-commented, production-ready code.
+		`
+	*/
 
 	variables := `{
 		"role": "Go programming",

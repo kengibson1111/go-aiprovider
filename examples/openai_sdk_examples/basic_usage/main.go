@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 	// Replace with your actual import paths
 	// "your-project/types"
 	// "your-project/openai"
@@ -40,7 +38,7 @@ func BasicUsageExample() {
 	fmt.Println("✓ Client created successfully")
 
 	// Example of what the actual API call would look like:
-	ctx := context.Background()
+	//ctx := context.Background()
 	prompt := "Explain the concept of goroutines in Go programming language"
 
 	fmt.Printf("Sending prompt: %s\n", prompt)
@@ -64,10 +62,10 @@ func TimeoutExample() {
 	fmt.Println("\n=== Timeout Example ===")
 
 	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	//ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	//defer cancel()
 
-	prompt := "Write a detailed explanation of machine learning algorithms"
+	//prompt := "Write a detailed explanation of machine learning algorithms"
 
 	fmt.Printf("Making request with 30-second timeout...\n")
 
@@ -139,8 +137,8 @@ func ConfigurationVariationsExample() {
 func ErrorHandlingExample() {
 	fmt.Println("\n=== Error Handling Example ===")
 
-	ctx := context.Background()
-	prompt := "Test prompt for error handling"
+	//ctx := context.Background()
+	//prompt := "Test prompt for error handling"
 
 	fmt.Println("Demonstrating error handling patterns...")
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"sync"
@@ -24,17 +23,19 @@ var globalClientManager = &ClientManager{}
 
 // GetClient returns a singleton OpenAI client instance
 func (cm *ClientManager) GetClient() *openai.Client {
-	cm.once.Do(func() {
-		// Initialize client once
-		cm.client = openai.NewClient(
-		// In actual implementation, use proper configuration
-		// option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
-		)
-		log.Println("✓ OpenAI client initialized (singleton)")
-	})
+	/*
+		cm.once.Do(func() {
+			// Initialize client once
+			cm.client = &openai.NewClient(
+			// In actual implementation, use proper configuration
+			// option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
+			)
+			log.Println("✓ OpenAI client initialized (singleton)")
+		})
 
-	cm.mu.RLock()
-	defer cm.mu.RUnlock()
+		cm.mu.RLock()
+		defer cm.mu.RUnlock()
+	*/
 	return cm.client
 }
 
@@ -69,7 +70,7 @@ func RetryWithExponentialBackoff(client *openai.Client, prompt string, maxRetrie
 	var lastErr error
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		//ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
 		// In actual implementation:
 		// completion, err := makeAPICall(ctx, client, prompt)
@@ -86,7 +87,7 @@ func RetryWithExponentialBackoff(client *openai.Client, prompt string, maxRetrie
 			err = nil // Success on third attempt
 		}
 
-		cancel()
+		//cancel()
 
 		if err == nil {
 			fmt.Printf("✅ Success on attempt %d\n", attempt+1)
@@ -144,7 +145,7 @@ func RetryExample() {
 func ConcurrentRequestsExample() {
 	fmt.Println("\n=== Concurrent Requests Best Practice ===")
 
-	client := globalClientManager.GetClient()
+	//client := globalClientManager.GetClient()
 	prompts := []string{
 		"Explain Go goroutines",
 		"What are Go channels?",
@@ -206,12 +207,12 @@ func ConcurrentRequestsExample() {
 func ContextManagementExample() {
 	fmt.Println("\n=== Context Management Best Practices ===")
 
-	client := globalClientManager.GetClient()
+	//client := globalClientManager.GetClient()
 
 	// Example 1: Request with timeout
 	fmt.Println("1. Request with timeout:")
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel1()
+	//ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel1()
 
 	// In actual implementation:
 	// completion, err := makeRequestWithContext(ctx1, client, "Short prompt")
@@ -219,14 +220,16 @@ func ContextManagementExample() {
 
 	// Example 2: Request with cancellation
 	fmt.Println("2. Request with cancellation:")
-	ctx2, cancel2 := context.WithCancel(context.Background())
+	//ctx2, cancel2 := context.WithCancel(context.Background())
 
-	go func() {
-		// Simulate cancellation after 2 seconds
-		time.Sleep(2 * time.Second)
-		fmt.Println("   🛑 Cancelling request...")
-		cancel2()
-	}()
+	/*
+		go func() {
+			// Simulate cancellation after 2 seconds
+			time.Sleep(2 * time.Second)
+			fmt.Println("   🛑 Cancelling request...")
+			cancel2()
+		}()
+	*/
 
 	// In actual implementation:
 	// completion, err := makeRequestWithContext(ctx2, client, "Long prompt")
@@ -239,9 +242,9 @@ func ContextManagementExample() {
 
 	// Example 3: Request with deadline
 	fmt.Println("3. Request with deadline:")
-	deadline := time.Now().Add(5 * time.Second)
-	ctx3, cancel3 := context.WithDeadline(context.Background(), deadline)
-	defer cancel3()
+	//deadline := time.Now().Add(5 * time.Second)
+	//ctx3, cancel3 := context.WithDeadline(context.Background(), deadline)
+	//defer cancel3()
 
 	// In actual implementation:
 	// completion, err := makeRequestWithContext(ctx3, client, "Medium prompt")
@@ -254,8 +257,8 @@ func ContextManagementExample() {
 func ErrorHandlingBestPractices() {
 	fmt.Println("\n=== Error Handling Best Practices ===")
 
-	client := globalClientManager.GetClient()
-	ctx := context.Background()
+	//client := globalClientManager.GetClient()
+	//ctx := context.Background()
 
 	// Simulate different error scenarios
 	errorScenarios := []struct {
