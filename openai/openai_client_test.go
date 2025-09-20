@@ -267,6 +267,7 @@ func TestOpenAIClient_ValidateCredentials(t *testing.T) {
 					t.Errorf("Expected Authorization header with Bearer token")
 				}
 
+				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				w.Write([]byte(tt.responseBody))
 			}))
@@ -3905,6 +3906,7 @@ func TestOpenAIClient_EndpointConfiguration_Integration(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Note: With SDK integration, we can't easily decode the request body
 				// but the variable substitution is tested by the response behavior
+				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.mockStatusCode)
 				w.Write([]byte(tt.mockResponse))
 			}))
@@ -4014,25 +4016,26 @@ func TestOpenAIClient_CallWithPromptAndVariables_ErrorPropagation(t *testing.T) 
 			name:          "invalid API key",
 			statusCode:    401,
 			responseBody:  `{"error": {"message": "Invalid API key", "type": "invalid_request_error"}}`,
-			expectedError: "API error",
+			expectedError: "invalid API key",
 		},
 		{
 			name:          "server error",
 			statusCode:    500,
 			responseBody:  "Internal Server Error",
-			expectedError: "API error",
+			expectedError: "server error",
 		},
 		{
 			name:          "model not found",
 			statusCode:    404,
 			responseBody:  `{"error": {"message": "Model not found", "type": "invalid_request_error"}}`,
-			expectedError: "API error",
+			expectedError: "model error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				w.Write([]byte(tt.responseBody))
 			}))
@@ -4087,7 +4090,8 @@ func TestOpenAIClient_CallWithPromptAndVariables_Integration(t *testing.T) {
 		t.Fatalf("Failed to create OpenAI client: %v", err)
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	testCases := []struct {
 		name           string
