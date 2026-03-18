@@ -102,12 +102,6 @@ func TestClientFactory_CreateClient_ClaudeProvider(t *testing.T) {
 	if client == nil {
 		t.Fatal("Expected non-nil client for valid Claude config")
 	}
-
-	// Verify the client implements the AIClient interface
-	_, ok := client.(AIClient)
-	if !ok {
-		t.Error("Created client does not implement AIClient interface")
-	}
 }
 
 func TestClientFactory_CreateClient_OpenAIProvider(t *testing.T) {
@@ -122,12 +116,6 @@ func TestClientFactory_CreateClient_OpenAIProvider(t *testing.T) {
 
 	if client == nil {
 		t.Fatal("Expected non-nil client for valid OpenAI config")
-	}
-
-	// Verify the client implements the AIClient interface
-	_, ok := client.(AIClient)
-	if !ok {
-		t.Error("Created client does not implement AIClient interface")
 	}
 }
 
@@ -419,12 +407,6 @@ func TestClientFactory_CreateClient_AllProviders(t *testing.T) {
 
 			if client == nil {
 				t.Errorf("Expected non-nil %s client", p.name)
-			}
-
-			// Verify the client implements all required methods
-			_, ok := client.(AIClient)
-			if !ok {
-				t.Errorf("%s client does not implement AIClient interface", p.name)
 			}
 		})
 	}
