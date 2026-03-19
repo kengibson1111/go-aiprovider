@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
 )
 
 // BaseHTTPClient provides common HTTP functionality for AI clients
@@ -14,7 +16,7 @@ type BaseHTTPClient struct {
 	HttpClient *http.Client
 	baseURL    string
 	ApiKey     string
-	logger     *Logger
+	logger     *logging.DefaultLogger
 }
 
 // NewBaseHTTPClient creates a new base HTTP client with timeout and retry logic
@@ -25,7 +27,7 @@ func NewBaseHTTPClient(baseURL, apiKey string, timeout time.Duration) *BaseHTTPC
 		},
 		baseURL: strings.TrimSuffix(baseURL, "/"),
 		ApiKey:  apiKey,
-		logger:  NewLogger("HTTPClient"),
+		logger:  logging.NewDefaultLogger(),
 	}
 }
 
@@ -48,12 +50,6 @@ type HTTPResponse struct {
 func (c *BaseHTTPClient) DoRequest(ctx context.Context, req HTTPRequest) (*HTTPResponse, error) {
 	url := c.baseURL + req.Path
 
-	// Check network status before making request
-	if globalNetworkMonitor != nil && globalNetworkMonitor.IsOffline() {
-		c.logger.Warn("Network is offline, request will likely fail: %s %s", req.Method, url)
-		return nil, fmt.Errorf("network is offline")
-	}
-
 	httpReq, err := http.NewRequestWithContext(ctx, req.Method, url, req.Body)
 	if err != nil {
 		c.logger.Error("Failed to create HTTP request: %v", err)
@@ -74,15 +70,6 @@ func (c *BaseHTTPClient) DoRequest(ctx context.Context, req HTTPRequest) (*HTTPR
 	maxRetries := 3
 	baseDelay := time.Millisecond * 500
 
-	// Adjust retry strategy based on network status
-	if globalNetworkMonitor != nil {
-		status := globalNetworkMonitor.GetStatus()
-		if status == NetworkStatusLimited {
-			maxRetries = 5          // More retries for limited connectivity
-			baseDelay = time.Second // Longer delays
-		}
-	}
-
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		resp, err = c.HttpClient.Do(httpReq)
 		if err != nil {
@@ -91,15 +78,6 @@ func (c *BaseHTTPClient) DoRequest(ctx context.Context, req HTTPRequest) (*HTTPR
 
 			if attempt == maxRetries {
 				c.logger.Error("HTTP request failed after %d attempts: %v", maxRetries+1, err)
-
-				// Update network status if this appears to be a connectivity issue
-				if isNetworkError && globalNetworkMonitor != nil {
-					go func() {
-						ctx := context.Background()
-						globalNetworkMonitor.CheckConnectivity(ctx)
-					}()
-				}
-
 				return nil, fmt.Errorf("request failed after %d attempts: %w", maxRetries+1, err)
 			}
 

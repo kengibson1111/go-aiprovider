@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/kengibson1111/go-aiprovider/claude"
+	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
 	"github.com/kengibson1111/go-aiprovider/openai"
 	"github.com/kengibson1111/go-aiprovider/types"
-	"github.com/kengibson1111/go-aiprovider/utils"
 )
 
 // AIClient defines the interface for AI service clients
@@ -29,25 +29,19 @@ type AIClient interface {
 	//   response, err := client.CallWithPromptAndVariables(ctx, prompt, variables)
 	CallWithPromptAndVariables(ctx context.Context, prompt string, variablesJSON string) ([]byte, error)
 
-	// GenerateCompletion generates code completions based on current code context and cursor position.
-	GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error)
-
-	// GenerateCode generates code from natural language prompts with project context.
-	GenerateCode(ctx context.Context, req types.CodeGenerationRequest) (*types.CodeGenerationResponse, error)
-
 	// ValidateCredentials validates API credentials for the configured provider.
 	ValidateCredentials(ctx context.Context) error
 }
 
 // ClientFactory creates AI clients based on provider configuration
 type ClientFactory struct {
-	logger *utils.Logger
+	logger *logging.DefaultLogger
 }
 
 // NewClientFactory creates a new client factory
 func NewClientFactory() *ClientFactory {
 	return &ClientFactory{
-		logger: utils.NewLogger("ClientFactory"),
+		logger: logging.NewDefaultLogger(),
 	}
 }
 

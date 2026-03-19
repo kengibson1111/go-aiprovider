@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
 	"github.com/kengibson1111/go-aiprovider/types"
 	"github.com/kengibson1111/go-aiprovider/utils"
 )
@@ -18,7 +18,7 @@ type ClaudeClient struct {
 	model       string
 	maxTokens   int
 	temperature float64
-	logger      *utils.Logger
+	logger      *logging.DefaultLogger
 }
 
 // ClaudeMessage represents a message in Claude API format
@@ -81,7 +81,7 @@ func NewClaudeClient(config *types.AIConfig) (*ClaudeClient, error) {
 		model:          config.Model,
 		maxTokens:      config.MaxTokens,
 		temperature:    config.Temperature,
-		logger:         utils.NewLogger("ClaudeClient"),
+		logger:         logging.NewDefaultLogger(),
 	}
 
 	// Set default model if not specified
@@ -252,229 +252,4 @@ func (c *ClaudeClient) CallWithPrompt(ctx context.Context, prompt string) ([]byt
 	}
 
 	return resp.Body, nil
-}
-
-// GenerateCompletion generates code completion using Claude API
-func (c *ClaudeClient) GenerateCompletion(ctx context.Context, req types.CompletionRequest) (*types.CompletionResponse, error) {
-	c.logger.Info("Generating completion for language: %s", req.Language)
-
-	// Build context-aware prompt
-	prompt := c.buildCompletionPrompt(req)
-	resp, err := c.CallWithPrompt(ctx, prompt)
-	if err != nil {
-		return &types.CompletionResponse{
-			Suggestions: []string{},
-			Confidence:  0.0,
-			Error:       fmt.Sprintf("ERROR: %v", err),
-		}, nil
-	}
-
-	var claudeResp ClaudeResponse
-	if err := json.Unmarshal(resp, &claudeResp); err != nil {
-		c.logger.Error("Failed to unmarshal response: %v", err)
-		return &types.CompletionResponse{
-			Suggestions: []string{},
-			Confidence:  0.0,
-			Error:       "Failed to parse response",
-		}, nil
-	}
-
-	// Extract suggestions from Claude response
-	suggestions := c.extractCompletionSuggestions(claudeResp)
-	confidence := c.calculateConfidence(claudeResp)
-
-	c.logger.Info("Generated %d completion suggestions", len(suggestions))
-
-	return &types.CompletionResponse{
-		Suggestions: suggestions,
-		Confidence:  confidence,
-	}, nil
-}
-
-// GenerateCode generates code using Claude API
-func (c *ClaudeClient) GenerateCode(ctx context.Context, req types.CodeGenerationRequest) (*types.CodeGenerationResponse, error) {
-	c.logger.Info("Generating code for language: %s", req.Language)
-
-	// Build context-aware prompt
-	prompt := c.buildCodeGenerationPrompt(req)
-	resp, err := c.CallWithPrompt(ctx, prompt)
-	if err != nil {
-		return &types.CodeGenerationResponse{
-			Code:  "",
-			Error: fmt.Sprintf("ERROR: %v", err),
-		}, nil
-	}
-
-	var claudeResp ClaudeResponse
-	if err := json.Unmarshal(resp, &claudeResp); err != nil {
-		c.logger.Error("Failed to unmarshal response: %v", err)
-		return &types.CodeGenerationResponse{
-			Code:  "",
-			Error: "Failed to parse response",
-		}, nil
-	}
-
-	// Extract generated code from Claude response
-	code := c.extractGeneratedCode(claudeResp)
-
-	c.logger.Info("Generated code with %d characters", len(code))
-
-	return &types.CodeGenerationResponse{
-		Code: code,
-	}, nil
-}
-
-// buildCompletionPrompt builds a context-aware prompt for code completion
-func (c *ClaudeClient) buildCompletionPrompt(req types.CompletionRequest) string {
-	var prompt strings.Builder
-
-	prompt.WriteString(fmt.Sprintf("You are a code completion assistant for %s. ", req.Language))
-	prompt.WriteString("Provide code completions that continue from the cursor position. ")
-	prompt.WriteString("Return only the completion text without explanations.\n\n")
-
-	// Add context information
-	if req.Context.CurrentFunction != "" {
-		prompt.WriteString(fmt.Sprintf("Current function: %s\n", req.Context.CurrentFunction))
-	}
-
-	if len(req.Context.Imports) > 0 {
-		prompt.WriteString("Imports:\n")
-		for _, imp := range req.Context.Imports {
-			prompt.WriteString(fmt.Sprintf("- %s\n", imp))
-		}
-	}
-
-	if req.Context.ProjectType != "" {
-		prompt.WriteString(fmt.Sprintf("Project type: %s\n", req.Context.ProjectType))
-	}
-
-	prompt.WriteString("\nCode to complete:\n")
-
-	// Add code before cursor
-	beforeCursor := req.Code[:req.Cursor]
-	afterCursor := req.Code[req.Cursor:]
-
-	prompt.WriteString(beforeCursor)
-	prompt.WriteString("<CURSOR>")
-	prompt.WriteString(afterCursor)
-
-	prompt.WriteString("\n\nProvide the completion for <CURSOR> position:")
-
-	return prompt.String()
-}
-
-// buildCodeGenerationPrompt builds a context-aware prompt for code generation
-func (c *ClaudeClient) buildCodeGenerationPrompt(req types.CodeGenerationRequest) string {
-	var prompt strings.Builder
-
-	prompt.WriteString(fmt.Sprintf("You are a code generation assistant for %s. ", req.Language))
-	prompt.WriteString("Generate code based on the following prompt. ")
-	prompt.WriteString("Return only the code without explanations or markdown formatting.\n\n")
-
-	// Add context information
-	if req.Context.CurrentFunction != "" {
-		prompt.WriteString(fmt.Sprintf("Current function: %s\n", req.Context.CurrentFunction))
-	}
-
-	if len(req.Context.Imports) > 0 {
-		prompt.WriteString("Available imports:\n")
-		for _, imp := range req.Context.Imports {
-			prompt.WriteString(fmt.Sprintf("- %s\n", imp))
-		}
-	}
-
-	if req.Context.ProjectType != "" {
-		prompt.WriteString(fmt.Sprintf("Project type: %s\n", req.Context.ProjectType))
-	}
-
-	prompt.WriteString("\nGenerate code for:\n")
-	prompt.WriteString(req.Prompt)
-
-	return prompt.String()
-}
-
-// extractCompletionSuggestions extracts completion suggestions from Claude response
-func (c *ClaudeClient) extractCompletionSuggestions(resp ClaudeResponse) []string {
-	if len(resp.Content) == 0 {
-		return []string{}
-	}
-
-	// Get the text content from the first content block
-	text := resp.Content[0].Text
-	if text == "" {
-		return []string{}
-	}
-
-	// Split by lines and filter out empty lines
-	lines := strings.Split(text, "\n")
-	var suggestions []string
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			suggestions = append(suggestions, line)
-		}
-	}
-
-	// If we have multiple lines, treat each as a separate suggestion
-	// Otherwise, return the single suggestion
-	if len(suggestions) == 0 {
-		return []string{text}
-	}
-
-	return suggestions
-}
-
-// extractGeneratedCode extracts generated code from Claude response
-func (c *ClaudeClient) extractGeneratedCode(resp ClaudeResponse) string {
-	if len(resp.Content) == 0 {
-		return ""
-	}
-
-	// Get the text content from the first content block
-	text := resp.Content[0].Text
-
-	// Remove markdown code block formatting if present
-	text = strings.TrimPrefix(text, "```")
-	if strings.HasPrefix(text, "typescript") || strings.HasPrefix(text, "javascript") ||
-		strings.HasPrefix(text, "python") || strings.HasPrefix(text, "go") {
-		lines := strings.Split(text, "\n")
-		if len(lines) > 1 {
-			text = strings.Join(lines[1:], "\n")
-		}
-	}
-	text = strings.TrimSuffix(text, "```")
-
-	return strings.TrimSpace(text)
-}
-
-// calculateConfidence calculates confidence score based on Claude response
-func (c *ClaudeClient) calculateConfidence(resp ClaudeResponse) float64 {
-	// Base confidence
-	confidence := 0.7
-
-	// Adjust based on stop reason
-	switch resp.StopReason {
-	case "end_turn":
-		confidence += 0.2
-	case "max_tokens":
-		confidence -= 0.1
-	case "stop_sequence":
-		confidence += 0.1
-	}
-
-	// Adjust based on response length
-	if len(resp.Content) > 0 && len(resp.Content[0].Text) > 50 {
-		confidence += 0.1
-	}
-
-	// Ensure confidence is within bounds
-	if confidence > 1.0 {
-		confidence = 1.0
-	}
-	if confidence < 0.0 {
-		confidence = 0.0
-	}
-
-	return confidence
 }
