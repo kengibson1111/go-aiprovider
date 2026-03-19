@@ -5,9 +5,11 @@ This directory contains comprehensive examples demonstrating how to use the migr
 ## 📁 Files Overview
 
 ### 📖 Documentation
+
 - **[../docs/openai_sdk_usage_examples.md](../docs/openai_sdk_usage_examples.md)** - Comprehensive usage guide with detailed explanations
 
 ### 🚀 Runnable Examples
+
 - **[basic_usage.go](basic_usage.go)** - Basic setup, configuration, and simple API calls
 - **[advanced_features.go](advanced_features.go)** - Streaming, function calling, and multi-turn conversations
 - **[best_practices.go](best_practices.go)** - Performance optimization, error handling, and production patterns
@@ -15,12 +17,15 @@ This directory contains comprehensive examples demonstrating how to use the migr
 ## 🏃‍♂️ Quick Start
 
 ### Prerequisites
+
 1. Set your OpenAI API key:
+
    ```bash
    export OPENAI_API_KEY=your_api_key_here
    ```
 
 2. Ensure you have the OpenAI SDK v2 dependency:
+
    ```bash
    go mod tidy
    ```
@@ -41,6 +46,7 @@ go run best_practices.go
 ## 📚 What You'll Learn
 
 ### Basic Usage (`basic_usage.go`)
+
 - ✅ Client configuration and initialization
 - ✅ Simple prompt completion
 - ✅ Context management with timeouts
@@ -49,6 +55,7 @@ go run best_practices.go
 - ✅ Performance comparison with old implementation
 
 ### Advanced Features (`advanced_features.go`)
+
 - 🔄 Multi-turn conversations with system/user/assistant messages
 - 🛠️ Function calling with custom tools
 - 📡 Streaming responses for real-time output
@@ -57,6 +64,7 @@ go run best_practices.go
 - 🔗 Complex conversation flows
 
 ### Best Practices (`best_practices.go`)
+
 - ♻️ Client reuse patterns (singleton)
 - 🔄 Retry logic with exponential backoff
 - 🚦 Concurrent request handling
@@ -68,17 +76,20 @@ go run best_practices.go
 ## 🎯 Key Benefits Demonstrated
 
 ### Performance Improvements
+
 - **40-60% faster** response processing (no JSON unmarshaling)
 - **30-50% less** memory usage (direct type access)
 - **Zero** JSON processing overhead in response path
 
 ### Developer Experience
+
 - **Type Safety**: Compile-time error checking vs runtime JSON errors
 - **Direct Access**: `completion.Choices[0].Message.Content` vs JSON unmarshaling
 - **Better Errors**: Structured error types with specific error codes
 - **Advanced Features**: Native streaming, function calling, conversations
 
 ### Code Quality
+
 - **Less Code**: Eliminated JSON marshaling/unmarshaling boilerplate
 - **More Reliable**: SDK handles retries, connection pooling automatically
 - **Future-Proof**: Automatic compatibility with OpenAI API updates
@@ -86,6 +97,7 @@ go run best_practices.go
 ## 🔧 Migration Patterns
 
 ### Before (JSON-based)
+
 ```go
 // ❌ Old approach - avoid this
 respBytes, err := client.CallWithPrompt(ctx, "Hello")
@@ -102,6 +114,7 @@ content := response.Choices[0].Message.Content
 ```
 
 ### After (SDK-based)
+
 ```go
 // ✅ New approach - use this
 completion, err := client.CallWithPrompt(ctx, "Hello")
@@ -116,6 +129,7 @@ content := completion.Choices[0].Message.Content
 ## 🛠️ Customization
 
 ### Adapting Examples
+
 To use these examples in your project:
 
 1. **Update imports**: Replace example imports with your actual package paths
@@ -124,6 +138,7 @@ To use these examples in your project:
 4. **Configure client**: Use your actual client creation logic
 
 ### Example Adaptation
+
 ```go
 // Replace this example import:
 // "your-project/types"
@@ -143,6 +158,7 @@ client, err := openai.NewOpenAIClient(config)
 ## 🔍 Error Scenarios Covered
 
 ### API Errors
+
 - `invalid_api_key` - Authentication failures
 - `rate_limit_exceeded` - Rate limiting
 - `insufficient_quota` - Quota/billing issues
@@ -150,12 +166,14 @@ client, err := openai.NewOpenAIClient(config)
 - `context_length_exceeded` - Prompt too long
 
 ### Network Errors
+
 - Connection timeouts
 - Network connectivity issues
 - Context cancellation
 - Request deadlines
 
 ### Application Errors
+
 - Invalid configuration
 - Missing environment variables
 - Concurrent access patterns
@@ -184,6 +202,7 @@ After reviewing these examples:
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check the [comprehensive documentation](../docs/openai_sdk_usage_examples.md)
 2. Verify your API key and configuration
 3. Review error handling patterns in `best_practices.go`

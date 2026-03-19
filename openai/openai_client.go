@@ -164,8 +164,8 @@ import (
 	"time"
 
 	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
+	"github.com/kengibson1111/go-aiprovider/internal/shared/utils"
 	"github.com/kengibson1111/go-aiprovider/types"
-	"github.com/kengibson1111/go-aiprovider/utils"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
 	"github.com/openai/openai-go/v2/packages/ssestream"

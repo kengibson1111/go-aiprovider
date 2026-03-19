@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
+	"github.com/kengibson1111/go-aiprovider/internal/shared/utils"
 	"github.com/kengibson1111/go-aiprovider/types"
-	"github.com/kengibson1111/go-aiprovider/utils"
 )
 
 // ClaudeClient implements the AIClient interface for Claude API

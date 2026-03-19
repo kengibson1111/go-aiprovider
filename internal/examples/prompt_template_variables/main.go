@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/kengibson1111/go-aiprovider/client"
+	"github.com/kengibson1111/go-aiprovider/internal/shared/utils"
 	"github.com/kengibson1111/go-aiprovider/types"
-	"github.com/kengibson1111/go-aiprovider/utils"
 )
 
 // Example demonstrating prompt template variable substitution functionality
