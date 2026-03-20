@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kengibson1111/go-aiprovider/claude"
+	"github.com/kengibson1111/go-aiprovider/claudeclient"
 	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
-	"github.com/kengibson1111/go-aiprovider/openai"
+	"github.com/kengibson1111/go-aiprovider/openaiclient"
 	"github.com/kengibson1111/go-aiprovider/types"
 )
 
@@ -55,9 +55,9 @@ func (f *ClientFactory) CreateClient(config *types.AIConfig) (AIClient, error) {
 
 	switch strings.ToLower(config.Provider) {
 	case "claude":
-		return claude.NewClaudeClient(config)
+		return claudeclient.NewClaudeClient(config)
 	case "openai":
-		return openai.NewOpenAIClient(config)
+		return openaiclient.NewOpenAIClient(config)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", config.Provider)
 	}

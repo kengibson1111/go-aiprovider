@@ -152,7 +152,7 @@
 //   - Built-in connection pooling and optimization
 //   - Automatic retry logic and backoff strategies
 //   - Type-safe parameter construction and response access
-package openai
+package openaiclient
 
 import (
 	"context"
