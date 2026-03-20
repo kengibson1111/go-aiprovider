@@ -36,7 +36,7 @@ func main() {
     config := &types.AIConfig{
         Provider:    "openai",
         APIKey:      "your-api-key-here", // Use environment variable in production
-        Model:       "gpt-4o-mini",       // Optional: defaults to gpt-4o-mini
+        Model:       "gpt-5.4-mini",       // Optional: defaults to gpt-5.4-mini
         MaxTokens:   1000,                // Optional: defaults to 1000
         Temperature: 0.7,                 // Optional: defaults to 0.7
     }
@@ -64,7 +64,7 @@ config := &types.AIConfig{
     Provider:    "openai",
     APIKey:      "your-azure-api-key",
     BaseURL:     "https://your-resource.openai.azure.com/",
-    Model:       "gpt-4o-mini",
+    Model:       "gpt-5.4-mini",
     MaxTokens:   1500,
     Temperature: 0.5,
 }
@@ -516,7 +516,7 @@ func getClient() *openai.OpenAIClient {
         config := &types.AIConfig{
             Provider:    "openai",
             APIKey:      os.Getenv("OPENAI_API_KEY"),
-            Model:       "gpt-4o-mini",
+            Model:       "gpt-5.4-mini",
             MaxTokens:   1000,
             Temperature: 0.7,
         }

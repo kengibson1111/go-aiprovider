@@ -44,7 +44,7 @@ func (s *OpenAIClientIntegrationTestSuite) SetupSuite() {
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
-		Model:    "gpt-4o-mini",
+		Model:    "gpt-5.4-mini",
 	}
 
 	client, err := NewOpenAIClient(config)
@@ -75,7 +75,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestValidateCredentials_InvalidKey() 
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   "sk-invalid-key-for-testing",
-		Model:    "gpt-4o-mini",
+		Model:    "gpt-5.4-mini",
 	}
 	invalidClient, err := NewOpenAIClient(config)
 	require.NoError(s.T(), err, "Client creation should succeed even with invalid key")
@@ -260,7 +260,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestCallWithPromptAndVariables_Invali
 // TestGetModel verifies the model getter returns the configured model
 func (s *OpenAIClientIntegrationTestSuite) TestGetModel() {
 	model := s.client.GetModel()
-	assert.Equal(s.T(), "gpt-4o-mini", model,
+	assert.Equal(s.T(), "gpt-5.4-mini", model,
 		"GetModel should return the configured model")
 }
 
@@ -305,7 +305,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_Defaults() {
 	defer client.CloseIdleConnections()
 
 	assert.Equal(s.T(), string(openai.ChatModelGPT4oMini), client.GetModel(),
-		"Default model should be gpt-4o-mini")
+		"Default model should be gpt-5.4-mini")
 	assert.Equal(s.T(), 1000, client.maxTokens,
 		"Default maxTokens should be 1000")
 	assert.InDelta(s.T(), 0.7, client.temperature, 0.001,
@@ -319,7 +319,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 	config := &types.AIConfig{
 		Provider:    "openai",
 		APIKey:      apiKey,
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   2000,
 		Temperature: 0.5,
 	}
@@ -328,7 +328,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 	require.NoError(s.T(), err, "Client creation with custom config should succeed")
 	defer client.CloseIdleConnections()
 
-	assert.Equal(s.T(), "gpt-4o-mini", client.GetModel())
+	assert.Equal(s.T(), "gpt-5.4-mini", client.GetModel())
 	assert.Equal(s.T(), 2000, client.maxTokens)
 	assert.InDelta(s.T(), 0.5, client.temperature, 0.001)
 }

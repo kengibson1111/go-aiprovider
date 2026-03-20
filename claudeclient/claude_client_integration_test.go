@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package claudeclient
 
@@ -42,7 +41,7 @@ func (s *ClaudeClientIntegrationTestSuite) SetupSuite() {
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-20250514"
+		model = "claude-sonnet-4-6"
 	}
 
 	config := &types.AIConfig{
@@ -212,7 +211,7 @@ func (s *ClaudeClientIntegrationTestSuite) TestNewClaudeClient_CustomConfig() {
 	config := &types.AIConfig{
 		Provider:    "claude",
 		APIKey:      apiKey,
-		Model:       "claude-sonnet-4-20250514",
+		Model:       "claude-sonnet-4-6",
 		MaxTokens:   2000,
 		Temperature: 0.5,
 	}
@@ -220,7 +219,7 @@ func (s *ClaudeClientIntegrationTestSuite) TestNewClaudeClient_CustomConfig() {
 	client, err := NewClaudeClient(config)
 	require.NoError(s.T(), err, "Client creation with custom config should succeed")
 
-	assert.Equal(s.T(), "claude-sonnet-4-20250514", client.model)
+	assert.Equal(s.T(), "claude-sonnet-4-6", client.model)
 	assert.Equal(s.T(), 2000, client.maxTokens)
 	assert.InDelta(s.T(), 0.5, client.temperature, 0.001)
 }

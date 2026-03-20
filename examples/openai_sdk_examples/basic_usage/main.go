@@ -26,7 +26,7 @@ func BasicUsageExample() {
 	config := &AIConfig{
 		Provider:    "openai",
 		APIKey:      os.Getenv("OPENAI_API_KEY"), // Set this environment variable
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   1000,
 		Temperature: 0.7,
 	}
@@ -93,9 +93,9 @@ func ConfigurationVariationsExample() {
 	standardConfig := &AIConfig{
 		Provider:    "openai",
 		APIKey:      "your-api-key",
-		Model:       "gpt-4o-mini", // Default model
-		MaxTokens:   1000,          // Default max tokens
-		Temperature: 0.7,           // Default temperature
+		Model:       "gpt-5.4-mini", // Default model
+		MaxTokens:   1000,           // Default max tokens
+		Temperature: 0.7,            // Default temperature
 	}
 	fmt.Printf("Standard config: %+v\n", standardConfig)
 
@@ -104,7 +104,7 @@ func ConfigurationVariationsExample() {
 		Provider:    "openai",
 		APIKey:      "your-azure-api-key",
 		BaseURL:     "https://your-resource.openai.azure.com/",
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   1500,
 		Temperature: 0.5,
 	}
@@ -114,7 +114,7 @@ func ConfigurationVariationsExample() {
 	creativeConfig := &AIConfig{
 		Provider:    "openai",
 		APIKey:      "your-api-key",
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   2000,
 		Temperature: 0.9, // Higher temperature for more creative responses
 	}
@@ -124,7 +124,7 @@ func ConfigurationVariationsExample() {
 	deterministicConfig := &AIConfig{
 		Provider:    "openai",
 		APIKey:      "your-api-key",
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   500,
 		Temperature: 0.0, // Lower temperature for more deterministic responses
 	}

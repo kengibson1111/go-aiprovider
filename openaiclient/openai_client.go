@@ -21,7 +21,7 @@
 //
 //	config := &types.AIConfig{
 //		APIKey: "your-api-key",
-//		Model:  "gpt-4o-mini", // Optional, defaults to gpt-4o-mini
+//		Model:  "gpt-5.4-mini", // Optional, defaults to gpt-5.4-mini
 //	}
 //
 //	client, err := openai.NewOpenAIClient(config)
@@ -126,7 +126,7 @@
 //
 //   - APIKey: Required OpenAI API key
 //   - BaseURL: Optional custom endpoint (for Azure OpenAI Service)
-//   - Model: Optional model name (defaults to gpt-4o-mini)
+//   - Model: Optional model name (defaults to gpt-5.4-mini)
 //   - MaxTokens: Optional max tokens (defaults to 1000)
 //   - Temperature: Optional temperature (defaults to 0.7)
 //
@@ -243,7 +243,7 @@ func (w *CompletionsServiceWrapper) NewStreaming(ctx context.Context, params ope
 type OpenAIClient struct {
 	client      OpenAIClientInterface  // Wrapped OpenAI SDK client
 	httpClient  *http.Client           // Optimized HTTP client for resource management
-	model       string                 // Default model (e.g., gpt-4o-mini)
+	model       string                 // Default model (e.g., gpt-5.4-mini)
 	maxTokens   int                    // Default max tokens for responses
 	temperature float64                // Default temperature for randomness control
 	logger      *logging.DefaultLogger // Logger for debugging and monitoring
@@ -315,7 +315,7 @@ func createOptimizedHTTPClient() *http.Client {
 // Configuration options:
 //   - APIKey: Required OpenAI API key for authentication
 //   - BaseURL: Optional custom endpoint URL (for Azure OpenAI Service, etc.)
-//   - Model: Optional model name (defaults to gpt-4o-mini using SDK constant)
+//   - Model: Optional model name (defaults to gpt-5.4-mini using SDK constant)
 //   - MaxTokens: Optional max tokens per response (defaults to 1000)
 //   - Temperature: Optional randomness control (defaults to 0.7)
 //
@@ -330,7 +330,7 @@ func createOptimizedHTTPClient() *http.Client {
 //
 //	config := &types.AIConfig{
 //		APIKey:      "sk-...",
-//		Model:       "gpt-4o-mini",
+//		Model:       "gpt-5.4-mini",
 //		MaxTokens:   1500,
 //		Temperature: 0.8,
 //	}
@@ -380,7 +380,7 @@ func NewOpenAIClient(config *types.AIConfig) (*OpenAIClient, error) {
 	// Create SDK client with performance optimizations
 	sdkClient := openai.NewClient(opts...)
 
-	// Set default model to gpt-4o-mini using SDK constant if not specified
+	// Set default model to gpt-5.4-mini using SDK constant if not specified
 	model := config.Model
 	if model == "" {
 		model = string(openai.ChatModelGPT4oMini)

@@ -77,7 +77,7 @@ func openAIVariableExample() {
 	config := &types.AIConfig{
 		Provider:    "openai",
 		APIKey:      apiKey,
-		Model:       "gpt-4o-mini",
+		Model:       "gpt-5.4-mini",
 		MaxTokens:   150,
 		Temperature: 0.7,
 	}

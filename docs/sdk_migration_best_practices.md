@@ -47,7 +47,7 @@ func (cm *ClientManager) GetClient() *OpenAIClient {
         config := &types.AIConfig{
             Provider:    "openai",
             APIKey:      os.Getenv("OPENAI_API_KEY"),
-            Model:       "gpt-4o-mini",
+            Model:       "gpt-5.4-mini",
             MaxTokens:   1000,
             Temperature: 0.7,
         }
@@ -303,7 +303,7 @@ func LoadConfig() (*Config, error) {
     config := &Config{
         APIKey:      os.Getenv("OPENAI_API_KEY"),
         BaseURL:     os.Getenv("OPENAI_BASE_URL"), // Optional for Azure
-        Model:       getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
+        Model:       getEnvOrDefault("OPENAI_MODEL", "gpt-5.4-mini"),
         MaxTokens:   getEnvIntOrDefault("OPENAI_MAX_TOKENS", 1000),
         Temperature: getEnvFloatOrDefault("OPENAI_TEMPERATURE", 0.7),
         Timeout:     getEnvDurationOrDefault("OPENAI_TIMEOUT", 30*time.Second),
