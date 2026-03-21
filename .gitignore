@@ -31,4 +31,5 @@ go.work.sum
 # .idea/
 .vscode/
 .kiro/
+notes/
 original-specs/

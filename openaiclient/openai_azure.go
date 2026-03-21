@@ -44,8 +44,16 @@ import (
 )
 
 // requiredAzureEnvVars lists the OPENAI_AZURE_ environment variables that must be set
-// for Entra ID authentication, along with the standard AZURE_ variables they map to.
+// for model access.
 var requiredAzureEnvVars = map[string]string{
+	"OPENAI_AZURE_ENDPOINT":    "OPENAI_AZURE_ENDPOINT",
+	"OPENAI_AZURE_API_VERSION": "OPENAI_AZURE_API_VERSION",
+	"OPENAI_AZURE_MODEL":       "OPENAI_AZURE_MODEL",
+}
+
+// requiredAzureIdentityEnvVars lists the OPENAI_AZURE_ environment variables that must be set
+// for Entra ID authentication, along with the standard AZURE_ variables they map to.
+var requiredAzureIdentityEnvVars = map[string]string{
 	"OPENAI_AZURE_TENANT_ID":     "AZURE_TENANT_ID",
 	"OPENAI_AZURE_CLIENT_ID":     "AZURE_CLIENT_ID",
 	"OPENAI_AZURE_CLIENT_SECRET": "AZURE_CLIENT_SECRET",
@@ -62,11 +70,18 @@ func setAzureEnvFromConfig() error {
 			missing = append(missing, src)
 		}
 	}
+
+	for src := range requiredAzureIdentityEnvVars {
+		if strings.TrimSpace(os.Getenv(src)) == "" {
+			missing = append(missing, src)
+		}
+	}
+
 	if len(missing) > 0 {
 		return fmt.Errorf("required Azure environment variables not set: %s", strings.Join(missing, ", "))
 	}
 
-	for src, dst := range requiredAzureEnvVars {
+	for src, dst := range requiredAzureIdentityEnvVars {
 		if os.Getenv(dst) == "" {
 			os.Setenv(dst, os.Getenv(src))
 		}
@@ -96,25 +111,23 @@ func NewOpenAIAzureClient(config *types.AIConfig) (*OpenAIClient, error) {
 		return nil, fmt.Errorf("configuration is required")
 	}
 
-	if strings.TrimSpace(config.BaseURL) == "" {
-		return nil, fmt.Errorf("Azure OpenAI endpoint (BaseURL) is required for provider %s", types.ProviderOpenAIAzure)
-	}
-
 	// Validate and map OPENAI_AZURE_ env vars to standard AZURE_ env vars for DefaultAzureCredential
 	if err := setAzureEnvFromConfig(); err != nil {
 		return nil, err
 	}
 
+	if strings.TrimSpace(config.BaseURL) == "" {
+		// setAzureEnvFromConfig() validates OPENAI_AZURE_ENDPOINT
+		config.BaseURL = strings.TrimSpace(os.Getenv("OPENAI_AZURE_ENDPOINT"))
+	}
+
+	// setAzureEnvFromConfig() validates OPENAI_AZURE_API_VERSION
+	apiVersion := strings.TrimSpace(os.Getenv("OPENAI_AZURE_API_VERSION"))
+
 	// Create Azure identity credential
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Azure credential: %w", err)
-	}
-
-	// API version is required
-	apiVersion := strings.TrimSpace(os.Getenv("OPENAI_AZURE_API_VERSION"))
-	if apiVersion == "" {
-		return nil, fmt.Errorf("OPENAI_AZURE_API_VERSION environment variable is required")
 	}
 
 	// Create optimized HTTP client (reuses the same function from openai_client.go)
@@ -134,7 +147,8 @@ func NewOpenAIAzureClient(config *types.AIConfig) (*OpenAIClient, error) {
 	// Model defaults to gpt-4o-mini for Azure if not specified
 	model := config.Model
 	if model == "" {
-		model = "gpt-4o-mini"
+		// setAzureEnvFromConfig() validates OPENAI_AZURE_MODEL
+		model = strings.TrimSpace(os.Getenv("OPENAI_AZURE_MODEL"))
 	}
 
 	maxTokens := config.MaxTokens
