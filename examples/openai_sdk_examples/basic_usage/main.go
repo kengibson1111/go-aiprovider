@@ -26,6 +26,7 @@ func BasicUsageExample() {
 	config := &AIConfig{
 		Provider:    "openai",
 		APIKey:      os.Getenv("OPENAI_API_KEY"), // Set this environment variable
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:       "gpt-5.4-mini",
 		MaxTokens:   1000,
 		Temperature: 0.7,

@@ -77,6 +77,7 @@ func openAIVariableExample() {
 	config := &types.AIConfig{
 		Provider:    "openai",
 		APIKey:      apiKey,
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:       "gpt-5.4-mini",
 		MaxTokens:   150,
 		Temperature: 0.7,

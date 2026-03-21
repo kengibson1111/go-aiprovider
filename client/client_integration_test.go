@@ -91,6 +91,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_CaseInsensitiveProv
 			config := &types.AIConfig{
 				Provider: tc.provider,
 				APIKey:   apiKey,
+				BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 			}
 			client, err := s.factory.CreateClient(config)
 			require.NoError(s.T(), err, "Provider %q should be accepted", tc.provider)
@@ -278,6 +279,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI() {
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -296,6 +298,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ValidateCred
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -319,6 +322,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_CallWithProm
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -351,6 +355,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_CallWithProm
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -401,6 +406,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ContextCance
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -427,6 +433,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCallWithPromptAndVariables_Inval
 		client, err = s.factory.CreateClient(&types.AIConfig{
 			Provider: "openai",
 			APIKey:   apiKey,
+			BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 			Model:    "gpt-5.4-mini",
 		})
 		require.NoError(s.T(), err)

@@ -44,6 +44,7 @@ func (s *OpenAIClientIntegrationTestSuite) SetupSuite() {
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    "gpt-5.4-mini",
 	}
 
@@ -298,6 +299,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_Defaults() {
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 	}
 
 	client, err := NewOpenAIClient(config)
@@ -319,6 +321,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 	config := &types.AIConfig{
 		Provider:    "openai",
 		APIKey:      apiKey,
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:       "gpt-5.4-mini",
 		MaxTokens:   2000,
 		Temperature: 0.5,
