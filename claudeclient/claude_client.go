@@ -86,7 +86,7 @@ func NewClaudeClient(config *types.AIConfig) (*ClaudeClient, error) {
 
 	// Set default model if not specified
 	if client.model == "" {
-		client.model = "claude-3-sonnet-20240229"
+		client.model = "claude-sonnet-4-6"
 	}
 
 	// Set default max tokens if not specified

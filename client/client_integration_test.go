@@ -117,6 +117,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude() {
 	config := &types.AIConfig{
 		Provider: "claude",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
 	}
 
@@ -140,6 +141,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_ValidateCred
 	config := &types.AIConfig{
 		Provider: "claude",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
 	}
 
@@ -168,6 +170,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_CallWithProm
 	config := &types.AIConfig{
 		Provider: "claude",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
 	}
 
@@ -204,6 +207,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_CallWithProm
 	config := &types.AIConfig{
 		Provider: "claude",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
 	}
 
@@ -254,6 +258,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_ContextCance
 	config := &types.AIConfig{
 		Provider: "claude",
 		APIKey:   apiKey,
+		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    "claude-sonnet-4-6",
 	}
 
@@ -445,6 +450,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCallWithPromptAndVariables_Inval
 		client, err = s.factory.CreateClient(&types.AIConfig{
 			Provider: "claude",
 			APIKey:   apiKey,
+			BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		})
 		require.NoError(s.T(), err)
 	}

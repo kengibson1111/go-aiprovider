@@ -132,7 +132,8 @@ func claudeVariableExample() {
 	config := &types.AIConfig{
 		Provider:    "claude",
 		APIKey:      apiKey,
-		Model:       "claude-3-sonnet-20240229",
+		BaseURL:     os.Getenv("CLAUDE_API_ENDPOINT"),
+		Model:       "claude-sonnet-4-6",
 		MaxTokens:   150,
 		Temperature: 0.5,
 	}
