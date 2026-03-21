@@ -339,16 +339,6 @@ func createOptimizedHTTPClient() *http.Client {
 //	if err != nil {
 //		log.Fatal("Failed to create client:", err)
 //	}
-//
-// Example with Azure OpenAI:
-//
-//	config := &types.AIConfig{
-//		APIKey:  "your-azure-key",
-//		BaseURL: "https://your-resource.openai.azure.com/",
-//		Model:   "gpt-4",
-//	}
-//
-//	client, err := NewOpenAIClient(config)
 func NewOpenAIClient(config *types.AIConfig) (*OpenAIClient, error) {
 	if config == nil {
 		return nil, fmt.Errorf("configuration is required")
