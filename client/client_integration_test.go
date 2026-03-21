@@ -425,6 +425,126 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ContextCance
 	assert.Error(s.T(), err, "Cancelled context should produce an error")
 }
 
+// --- OpenAI Azure Provider Tests ---
+
+// TestCreateClient_OpenAIAzure verifies an OpenAI Azure client can be created and used
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai-azure",
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err, "CreateClient for OpenAI Azure should succeed")
+	require.NotNil(s.T(), client, "OpenAI Azure client should not be nil")
+}
+
+// TestCreateClient_OpenAIAzure_ValidateCredentials verifies credential validation through the factory
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_ValidateCredentials() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai-azure",
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = client.ValidateCredentials(ctx)
+	assert.NoError(s.T(), err, "Valid Azure credentials should pass validation")
+}
+
+// TestCreateClient_OpenAIAzure_CallWithPrompt verifies a prompt call through the factory-created client
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWithPrompt() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai-azure",
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	response, err := client.CallWithPrompt(ctx, "Reply with only the word 'hello'.")
+	require.NoError(s.T(), err, "CallWithPrompt should succeed")
+	require.NotNil(s.T(), response, "Response should not be nil")
+
+	// Verify the response is valid JSON
+	var result map[string]interface{}
+	err = json.Unmarshal(response, &result)
+	assert.NoError(s.T(), err, "Response should be valid JSON")
+	assert.Contains(s.T(), result, "choices", "OpenAI Azure response should contain choices")
+	assert.Contains(s.T(), result, "model", "OpenAI Azure response should contain model")
+	assert.Contains(s.T(), result, "usage", "OpenAI Azure response should contain usage")
+}
+
+// TestCreateClient_OpenAIAzure_CallWithPromptAndVariables verifies template variable substitution
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWithPromptAndVariables() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai-azure",
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	prompt := "You are a {{role}}. Reply with only: I am a {{role}}."
+	variables := `{"role": "translator"}`
+
+	response, err := client.CallWithPromptAndVariables(ctx, prompt, variables)
+	require.NoError(s.T(), err, "CallWithPromptAndVariables should succeed")
+	require.NotNil(s.T(), response, "Response should not be nil")
+
+	var result map[string]interface{}
+	err = json.Unmarshal(response, &result)
+	assert.NoError(s.T(), err, "Response should be valid JSON")
+	assert.Contains(s.T(), result, "choices", "Response should contain choices")
+}
+
+// TestCreateClient_OpenAIAzure_ContextCancellation verifies cancelled contexts are handled
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_ContextCancellation() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "openai-azure",
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err = client.CallWithPrompt(ctx, "This should not complete")
+	assert.Error(s.T(), err, "Cancelled context should produce an error")
+}
+
 // --- Shared Error Tests ---
 
 // TestCallWithPromptAndVariables_InvalidJSON verifies error on bad variable JSON for both providers
