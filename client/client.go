@@ -54,10 +54,12 @@ func (f *ClientFactory) CreateClient(config *types.AIConfig) (AIClient, error) {
 	f.logger.Info("Creating AI client for provider: %s", config.Provider)
 
 	switch strings.ToLower(config.Provider) {
-	case "claude":
+	case types.ProviderClaude:
 		return claudeclient.NewClaudeClient(config)
-	case "openai":
+	case types.ProviderOpenAI:
 		return openaiclient.NewOpenAIClient(config)
+	case types.ProviderOpenAIAzure:
+		return openaiclient.NewOpenAIAzureClient(config)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", config.Provider)
 	}
