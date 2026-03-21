@@ -501,8 +501,8 @@ func (c *OpenAIClient) ValidateCredentials(ctx context.Context) error {
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage("Hello"),
 		},
-		MaxTokens:   openai.Int(5),
-		Temperature: openai.Float(0.1),
+		MaxCompletionTokens: openai.Int(5),
+		Temperature:         openai.Float(0.1),
 		// Performance optimization: Request only one choice for minimal response
 		N: openai.Int(1),
 		// Performance optimization: Disable logprobs for minimal response payload
@@ -606,8 +606,8 @@ func (c *OpenAIClient) callWithPrompt(ctx context.Context, prompt string) (*open
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		},
-		MaxTokens:   openai.Int(int64(c.maxTokens)),
-		Temperature: openai.Float(c.temperature),
+		MaxCompletionTokens: openai.Int(int64(c.maxTokens)),
+		Temperature:         openai.Float(c.temperature),
 		// Performance optimization: Request only one choice to reduce response size and processing time
 		N: openai.Int(1),
 		// Performance optimization: Disable logprobs to reduce response payload size
@@ -650,10 +650,10 @@ func (c *OpenAIClient) CallWithMessages(ctx context.Context, messages []openai.C
 	c.logger.Info("Processing conversation with %d messages", len(messages))
 
 	params := openai.ChatCompletionNewParams{
-		Model:       openai.ChatModel(c.model),
-		Messages:    messages,
-		MaxTokens:   openai.Int(int64(c.maxTokens)),
-		Temperature: openai.Float(c.temperature),
+		Model:               openai.ChatModel(c.model),
+		Messages:            messages,
+		MaxCompletionTokens: openai.Int(int64(c.maxTokens)),
+		Temperature:         openai.Float(c.temperature),
 		// Performance optimization: Request only one choice to reduce response size
 		N: openai.Int(1),
 		// Performance optimization: Disable logprobs to reduce response payload size
@@ -716,9 +716,9 @@ func (c *OpenAIClient) CallWithTools(ctx context.Context, prompt string, tools [
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		},
-		Tools:       tools,
-		MaxTokens:   openai.Int(int64(c.maxTokens)),
-		Temperature: openai.Float(c.temperature),
+		Tools:               tools,
+		MaxCompletionTokens: openai.Int(int64(c.maxTokens)),
+		Temperature:         openai.Float(c.temperature),
 		// Performance optimization: Request only one choice to reduce response size
 		N: openai.Int(1),
 		// Performance optimization: Disable logprobs to reduce response payload size
@@ -787,8 +787,8 @@ func (c *OpenAIClient) CallWithPromptStream(ctx context.Context, prompt string) 
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		},
-		MaxTokens:   openai.Int(int64(c.maxTokens)),
-		Temperature: openai.Float(c.temperature),
+		MaxCompletionTokens: openai.Int(int64(c.maxTokens)),
+		Temperature:         openai.Float(c.temperature),
 		// Performance optimization: Request only one choice to reduce response size
 		N: openai.Int(1),
 		// Performance optimization: Disable logprobs to reduce response payload size
