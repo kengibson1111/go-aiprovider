@@ -56,6 +56,8 @@ func (f *ClientFactory) CreateClient(config *types.AIConfig) (AIClient, error) {
 	switch strings.ToLower(config.Provider) {
 	case types.ProviderClaude:
 		return claudeclient.NewClaudeClient(config)
+	case types.ProviderClaudeBedrock:
+		return claudeclient.NewClaudeBedrockClient(config)
 	case types.ProviderOpenAI:
 		return openaiclient.NewOpenAIClient(config)
 	case types.ProviderOpenAIAzure:

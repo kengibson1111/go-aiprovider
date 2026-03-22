@@ -2,9 +2,10 @@ package types
 
 // Provider constants for AIConfig.Provider
 const (
-	ProviderClaude      = "claude"
-	ProviderOpenAI      = "openai"
-	ProviderOpenAIAzure = "openai-azure"
+	ProviderClaude        = "claude"
+	ProviderClaudeBedrock = "claude-bedrock"
+	ProviderOpenAI        = "openai"
+	ProviderOpenAIAzure   = "openai-azure"
 )
 
 // ErrorResponse represents a structured error response
