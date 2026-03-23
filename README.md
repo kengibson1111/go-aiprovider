@@ -4,18 +4,23 @@ A Go library for unified AI provider integration, supporting multiple AI service
 
 ## Features
 
-- Unified interface for multiple AI providers (Claude, OpenAI)
+- Unified `AIClient` interface across all providers
 - Direct prompt calls via `CallWithPrompt`
 - Prompt template variable substitution via `CallWithPromptAndVariables`
+- Credential validation via `ValidateCredentials`
 - OpenAI SDK v2 integration with streaming, function calling, and multi-turn conversations
 - Configurable logging with environment-based log levels
 - Shared HTTP client with retry logic and network-aware backoff
-- Optimized connection pooling for the OpenAI client
+- Optimized connection pooling for OpenAI and Azure OpenAI clients
 
 ## Supported Providers
 
-- Claude (Anthropic) — custom HTTP client implementation
-- OpenAI (GPT models) — official OpenAI Go SDK v2
+| Provider | Config value | Authentication | Implementation |
+| --- | --- | --- | --- |
+| Claude (Anthropic) | `claude` | API key | Custom HTTP client |
+| Claude via Amazon Bedrock | `claude-bedrock` | AWS credential chain | AWS SDK v2 |
+| OpenAI | `openai` | API key | OpenAI Go SDK v2 |
+| Azure OpenAI Service | `openai-azure` | Microsoft Entra ID | OpenAI Go SDK v2 + Azure identity |
 
 ## Installation
 
@@ -42,7 +47,7 @@ func main() {
 
     config := &types.AIConfig{
         Provider:    "openai",
-        APIKey:      "your-api-key-here",
+        APIKey:      "your-api-key",
         Model:       "gpt-5.4-mini",
         MaxTokens:   1000,
         Temperature: 0.7,
@@ -82,13 +87,9 @@ type AIClient interface {
 }
 ```
 
-#### CallWithPrompt
-
-Sends a raw prompt to the AI provider and returns the raw response bytes.
-
-#### CallWithPromptAndVariables
-
-Sends a prompt template with variable substitution. Variables use `{{variable_name}}` format, and `variablesJSON` is a JSON object mapping variable names to values.
+- `CallWithPrompt` — sends a raw prompt and returns the raw JSON response bytes.
+- `CallWithPromptAndVariables` — substitutes `{{variable_name}}` placeholders in a prompt template before sending. `variablesJSON` is a JSON object mapping names to values.
+- `ValidateCredentials` — makes a minimal API call to verify credentials are valid.
 
 ```go
 prompt := "You are a {{role}} assistant. Help me with {{task}}."
@@ -96,117 +97,163 @@ variables := `{"role": "senior engineer", "task": "code review"}`
 response, err := aiClient.CallWithPromptAndVariables(ctx, prompt, variables)
 ```
 
-For detailed documentation, see the [Prompt Template Variables Guide](docs/prompt_template_variables.md).
-
-#### ValidateCredentials
-
-Validates API credentials for the configured provider.
-
-### OpenAI-Specific Methods
-
-The OpenAI client exposes additional methods beyond the shared interface when accessed directly via type assertion:
-
-```go
-if openaiClient, ok := aiClient.(*openaiclient.OpenAIClient); ok {
-    // Multi-turn conversations
-    completion, err := openaiClient.CallWithMessages(ctx, messages)
-
-    // Streaming responses
-    stream, err := openaiClient.CallWithPromptStream(ctx, "Tell me a story")
-
-    // Function calling
-    completion, err := openaiClient.CallWithTools(ctx, "What's the weather?", tools)
-}
-```
-
-See the [OpenAI SDK examples](examples/openai_sdk_examples/) for full working code.
-
 ### Configuration
 
 ```go
 type AIConfig struct {
-    Provider    string  `json:"provider"`    // "claude" or "openai"
-    APIKey      string  `json:"apiKey"`      // API key for the provider
-    BaseURL     string  `json:"baseUrl"`     // Optional custom base URL
-    Model       string  `json:"model"`       // Model name (e.g., "gpt-5.4-mini")
-    MaxTokens   int     `json:"maxTokens"`   // Maximum tokens in response
-    Temperature float64 `json:"temperature"` // Creativity level (0.0-1.0)
+    Provider    string  `json:"provider"`    // "claude", "claude-bedrock", "openai", or "openai-azure"
+    APIKey      string  `json:"apiKey"`      // API key (not needed for claude-bedrock or openai-azure)
+    BaseURL     string  `json:"baseUrl"`     // Optional custom endpoint
+    Model       string  `json:"model"`       // Model or deployment name
+    MaxTokens   int     `json:"maxTokens"`   // Max tokens in response (default: 1000)
+    Temperature float64 `json:"temperature"` // Creativity level 0.0-1.0 (default: 0.7)
 }
 ```
 
-## Environment Setup
+## Provider Setup
 
-Copy the sample environment file and fill in your API keys:
+### Claude (Anthropic)
 
-```bash
-cp .env.sample .env
-```
+Set your API key and optional endpoint in `.env`:
 
 ```env
-# Claude Configuration
 CLAUDE_API_KEY=your_claude_api_key_here
 CLAUDE_API_ENDPOINT=https://api.anthropic.com
 CLAUDE_MODEL=claude-sonnet-4-6
+```
 
-# OpenAI Configuration
+```go
+config := &types.AIConfig{
+    Provider: "claude",
+    APIKey:   os.Getenv("CLAUDE_API_KEY"),
+    BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
+    Model:    "claude-sonnet-4-6",
+}
+```
+
+### Claude via Amazon Bedrock
+
+Uses the AWS default credential chain (env vars, `~/.aws/credentials`, SSO, IAM role). No API key needed.
+
+```env
+CLAUDE_BEDROCK_REGION=us-east-1
+CLAUDE_BEDROCK_MODEL=us.anthropic.claude-sonnet-4-20250514-v1:0
+```
+
+```go
+config := &types.AIConfig{
+    Provider: "claude-bedrock",
+    Model:    "us.anthropic.claude-sonnet-4-20250514-v1:0",
+}
+```
+
+See [docs/claude_bedrock_setup.md](docs/claude_bedrock_setup.md) for IAM policy, model access, and troubleshooting.
+
+### OpenAI
+
+```env
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_API_ENDPOINT=
 OPENAI_MODEL=gpt-5.4-mini
-
-# Logging Configuration
-LOG_LEVEL=info
-VERBOSE=true
 ```
+
+```go
+config := &types.AIConfig{
+    Provider: "openai",
+    APIKey:   os.Getenv("OPENAI_API_KEY"),
+    Model:    "gpt-5.4-mini",
+}
+```
+
+### Azure OpenAI Service
+
+Uses Microsoft Entra ID (service principal) authentication. No API key needed.
+
+```env
+OPENAI_AZURE_ENDPOINT=https://your-resource.openai.azure.com
+OPENAI_AZURE_API_VERSION=2024-12-01-preview
+OPENAI_AZURE_MODEL=gpt-4o-mini
+OPENAI_AZURE_TENANT_ID=your_tenant_id
+OPENAI_AZURE_CLIENT_ID=your_client_id
+OPENAI_AZURE_CLIENT_SECRET=your_client_secret
+```
+
+```go
+config := &types.AIConfig{
+    Provider: "openai-azure",
+}
+```
+
+See [docs/openai_azure_setup.md](docs/openai_azure_setup.md) for resource creation, RBAC, and troubleshooting.
+
+## Environment Setup
+
+Copy the sample file and fill in the values for the providers you need:
+
+```powershell
+Copy-Item .env.sample .env
+```
+
+See `.env.sample` for the full list of configuration variables.
 
 ## Project Structure
 
 ```text
 go-aiprovider/
-├── client/              # AIClient interface and ClientFactory
-├── claudeclient/        # Claude (Anthropic) provider implementation
-├── openaiclient/        # OpenAI provider implementation (SDK v2)
-├── types/               # Shared types (AIConfig, ErrorResponse)
+├── client/                        # AIClient interface, ClientFactory, integration tests
+├── types/                         # Shared types (AIConfig, ErrorResponse)
 ├── internal/
-│   ├── shared/
-│   │   ├── logging/     # Configurable logger
-│   │   ├── utils/       # HTTP client, template processor
-│   │   └── testutil/    # Test setup helpers
-│   └── examples/        # Internal example code
+│   ├── claudeclient/              # Claude and Claude Bedrock provider implementations
+│   ├── openaiclient/              # OpenAI and Azure OpenAI provider implementations
+│   └── shared/
+│       ├── env/                   # Environment configuration loading
+│       ├── logging/               # Configurable logger
+│       ├── testutil/              # Test setup helpers
+│       └── utils/                 # HTTP client, template processor
 ├── examples/
-│   └── openai_sdk_examples/  # Runnable OpenAI SDK examples
-│       ├── basic_usage/
-│       ├── advanced_features/
-│       └── best_practices/
-└── docs/                # Documentation
+│   └── openai_client/             # Runnable OpenAI example
+└── docs/                          # Provider setup guides
 ```
 
 ## Examples
 
-Working examples are in the [examples/openai_sdk_examples](examples/openai_sdk_examples/) directory:
+See [examples/openai_client](examples/openai_client/) for a runnable example covering client creation, prompt calls, template variables, error handling, and credential validation.
 
-- [basic_usage](examples/openai_sdk_examples/basic_usage/) — client setup, configuration, simple prompts
-- [advanced_features](examples/openai_sdk_examples/advanced_features/) — streaming, function calling, multi-turn conversations
-- [best_practices](examples/openai_sdk_examples/best_practices/) — connection reuse, retry logic, concurrency, error handling
-
-An internal [prompt template variables example](internal/examples/prompt_template_variables/) demonstrates the `CallWithPromptAndVariables` feature.
+```powershell
+cd examples\openai_client
+go run main.go
+```
 
 ## Testing
 
-```bash
-# Run unit tests
-go test -short -timeout 120s ./...
+Unit and integration tests are separated by build tags. Run them per-package with appropriate timeouts.
 
-# Run integration tests (requires .env with API keys)
-go test -run Integration -timeout 120s ./...
+### Unit Tests
+
+```powershell
+go test ./internal/shared/env -v
+go test ./internal/shared/logging -v
+go test ./internal/shared/utils -v
 ```
 
-## Contributing
+### Integration Tests
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+Requires a configured `.env` file with valid credentials for the providers under test.
+
+```powershell
+go test ./client -v -tags=integration -timeout 5m
+go test ./internal/claudeclient -v -tags=integration -timeout 5m
+go test ./internal/openaiclient -v -tags=integration -timeout 5m
+go test ./internal/shared/logging -v -tags=integration -timeout 5m
+go test ./internal/shared/utils -v -tags=integration -timeout 5m
+```
+
+Run a specific provider's tests:
+
+```powershell
+go test ./client -v -tags=integration -timeout 5m -run "ClaudeBedrock"
+go test ./internal/claudeclient -v -tags=integration -timeout 5m -run "TestClaudeBedrockIntegrationTestSuite"
+```
 
 ## License
 

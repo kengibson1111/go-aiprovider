@@ -272,6 +272,155 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_ContextCance
 	assert.Error(s.T(), err, "Cancelled context should produce an error")
 }
 
+// --- Claude Bedrock Provider Tests ---
+
+// TestCreateClient_ClaudeBedrock verifies a Claude Bedrock client can be created and used
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock() {
+	region := os.Getenv("CLAUDE_BEDROCK_REGION")
+	if region == "" {
+		s.T().Skip("CLAUDE_BEDROCK_REGION not set, skipping Claude Bedrock integration tests")
+	}
+
+	model := os.Getenv("CLAUDE_BEDROCK_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_BEDROCK_MODEL not set, skipping Claude Bedrock integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "claude-bedrock",
+		Model:    model,
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err, "CreateClient for Claude Bedrock should succeed")
+	require.NotNil(s.T(), client, "Claude Bedrock client should not be nil")
+}
+
+// TestCreateClient_ClaudeBedrock_ValidateCredentials verifies credential validation through the factory
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_ValidateCredentials() {
+	region := os.Getenv("CLAUDE_BEDROCK_REGION")
+	if region == "" {
+		s.T().Skip("CLAUDE_BEDROCK_REGION not set, skipping Claude Bedrock integration tests")
+	}
+
+	model := os.Getenv("CLAUDE_BEDROCK_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_BEDROCK_MODEL not set, skipping Claude Bedrock integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "claude-bedrock",
+		Model:    model,
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = client.ValidateCredentials(ctx)
+	assert.NoError(s.T(), err, "Valid AWS credentials should pass validation")
+}
+
+// TestCreateClient_ClaudeBedrock_CallWithPrompt verifies a prompt call through the factory-created client
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_CallWithPrompt() {
+	region := os.Getenv("CLAUDE_BEDROCK_REGION")
+	if region == "" {
+		s.T().Skip("CLAUDE_BEDROCK_REGION not set, skipping Claude Bedrock integration tests")
+	}
+
+	model := os.Getenv("CLAUDE_BEDROCK_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_BEDROCK_MODEL not set, skipping Claude Bedrock integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "claude-bedrock",
+		Model:    model,
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	response, err := client.CallWithPrompt(ctx, "Reply with only the word 'hello'.")
+	require.NoError(s.T(), err, "CallWithPrompt should succeed")
+	require.NotNil(s.T(), response, "Response should not be nil")
+
+	// Verify the response is valid JSON
+	var result map[string]interface{}
+	err = json.Unmarshal(response, &result)
+	assert.NoError(s.T(), err, "Response should be valid JSON")
+	assert.Contains(s.T(), result, "content", "Claude Bedrock response should contain content")
+	assert.Contains(s.T(), result, "model", "Claude Bedrock response should contain model")
+}
+
+// TestCreateClient_ClaudeBedrock_CallWithPromptAndVariables verifies template variable substitution
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_CallWithPromptAndVariables() {
+	region := os.Getenv("CLAUDE_BEDROCK_REGION")
+	if region == "" {
+		s.T().Skip("CLAUDE_BEDROCK_REGION not set, skipping Claude Bedrock integration tests")
+	}
+
+	model := os.Getenv("CLAUDE_BEDROCK_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_BEDROCK_MODEL not set, skipping Claude Bedrock integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "claude-bedrock",
+		Model:    model,
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	prompt := "You are a {{role}}. Reply with only: I am a {{role}}."
+	variables := `{"role": "translator"}`
+
+	response, err := client.CallWithPromptAndVariables(ctx, prompt, variables)
+	require.NoError(s.T(), err, "CallWithPromptAndVariables should succeed")
+	require.NotNil(s.T(), response, "Response should not be nil")
+
+	var result map[string]interface{}
+	err = json.Unmarshal(response, &result)
+	assert.NoError(s.T(), err, "Response should be valid JSON")
+	assert.Contains(s.T(), result, "content", "Response should contain content")
+}
+
+// TestCreateClient_ClaudeBedrock_ContextCancellation verifies cancelled contexts are handled
+func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_ContextCancellation() {
+	region := os.Getenv("CLAUDE_BEDROCK_REGION")
+	if region == "" {
+		s.T().Skip("CLAUDE_BEDROCK_REGION not set, skipping Claude Bedrock integration tests")
+	}
+
+	model := os.Getenv("CLAUDE_BEDROCK_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_BEDROCK_MODEL not set, skipping Claude Bedrock integration tests")
+	}
+
+	config := &types.AIConfig{
+		Provider: "claude-bedrock",
+		Model:    model,
+	}
+
+	client, err := s.factory.CreateClient(config)
+	require.NoError(s.T(), err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err = client.CallWithPrompt(ctx, "This should not complete")
+	assert.Error(s.T(), err, "Cancelled context should produce an error")
+}
+
 // --- OpenAI Provider Tests ---
 
 // TestCreateClient_OpenAI verifies an OpenAI client can be created and used
