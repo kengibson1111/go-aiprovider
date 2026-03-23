@@ -222,13 +222,13 @@ func main() {
 	// variables (API keys, endpoints, etc.) are available without manual export.
 	// This example must be run from the repo's root directory
 	// (e.g., go run examples/openai_sdk_examples/basic_usage/main.go).
-	client.SetupEnvironment("../../../")
+	client.SetupEnvironment("../../")
 
 	// SetupCurrentDirectory ensures the working directory is the repo root,
 	// which is required for resolving any root-relative paths used by the client
 	// libraries. The cleanup function restores the original directory on exit.
 	// This example must be run from the repo's root directory.
-	cleanup := client.SetupCurrentDirectory("../../../")
+	cleanup := client.SetupCurrentDirectory("../../")
 	defer cleanup()
 
 	factory := client.NewClientFactory()
