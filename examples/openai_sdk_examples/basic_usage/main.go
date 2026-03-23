@@ -1,231 +1,244 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"os"
-	// Replace with your actual import paths
-	// "your-project/types"
-	// "your-project/openai"
+	"time"
+
+	"github.com/kengibson1111/go-aiprovider/client"
+	"github.com/kengibson1111/go-aiprovider/types"
 )
 
-// Example configuration - replace with your actual types
-type AIConfig struct {
-	Provider    string  `json:"provider"`
-	APIKey      string  `json:"apiKey"`
-	BaseURL     string  `json:"baseUrl,omitempty"`
-	Model       string  `json:"model"`
-	MaxTokens   int     `json:"maxTokens"`
-	Temperature float64 `json:"temperature"`
-}
-
-// BasicUsageExample demonstrates the most common usage patterns
-func BasicUsageExample() {
+// BasicUsageExample demonstrates creating a client and making a simple prompt call.
+func BasicUsageExample(factory *client.ClientFactory) {
 	fmt.Println("=== Basic Usage Example ===")
 
-	// Configuration with environment variable
-	config := &AIConfig{
+	config := &types.AIConfig{
 		Provider:    "openai",
-		APIKey:      os.Getenv("OPENAI_API_KEY"), // Set this environment variable
+		APIKey:      os.Getenv("OPENAI_API_KEY"),
 		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:       "gpt-5.4-mini",
+		Model:       "gpt-4o-mini",
 		MaxTokens:   1000,
 		Temperature: 0.7,
 	}
 
-	// In your actual code, use: client, err := openai.NewOpenAIClient(config)
-	fmt.Printf("Configuration: %+v\n", config)
+	aiClient, err := factory.CreateClient(config)
+	if err != nil {
+		log.Printf("Failed to create client: %v", err)
+		return
+	}
 
-	// Simulate client creation (replace with actual client creation)
-	fmt.Println("✓ Client created successfully")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	// Example of what the actual API call would look like:
-	//ctx := context.Background()
-	prompt := "Explain the concept of goroutines in Go programming language"
+	response, err := aiClient.CallWithPrompt(ctx, "Explain the concept of goroutines in one sentence.")
+	if err != nil {
+		log.Printf("API call failed: %v", err)
+		return
+	}
 
-	fmt.Printf("Sending prompt: %s\n", prompt)
+	var result map[string]any
+	if err := json.Unmarshal(response, &result); err != nil {
+		log.Printf("Failed to parse response: %v", err)
+		return
+	}
 
-	// In actual implementation:
-	// completion, err := client.CallWithPrompt(ctx, prompt)
-	// if err != nil {
-	//     log.Fatalf("API call failed: %v", err)
-	// }
-	//
-	// // Direct field access - no JSON unmarshaling!
-	// response := completion.Choices[0].Message.Content
-	// fmt.Printf("Response: %s\n", response)
-	// fmt.Printf("Tokens used: %d\n", completion.Usage.TotalTokens)
-
-	fmt.Println("✓ Basic usage example completed")
+	fmt.Printf("Response: %s\n", string(response))
+	fmt.Println("Basic usage example completed")
 }
 
-// TimeoutExample shows how to use context with timeout
-func TimeoutExample() {
+// TimeoutExample shows how to use context with timeout for request cancellation.
+func TimeoutExample(factory *client.ClientFactory) {
 	fmt.Println("\n=== Timeout Example ===")
 
-	// Create context with timeout
-	//ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	//defer cancel()
+	config := &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      os.Getenv("OPENAI_API_KEY"),
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
+		Model:       "gpt-4o-mini",
+		MaxTokens:   1000,
+		Temperature: 0.7,
+	}
 
-	//prompt := "Write a detailed explanation of machine learning algorithms"
+	aiClient, err := factory.CreateClient(config)
+	if err != nil {
+		log.Printf("Failed to create client: %v", err)
+		return
+	}
 
-	fmt.Printf("Making request with 30-second timeout...\n")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	// In actual implementation:
-	// completion, err := client.CallWithPrompt(ctx, prompt)
-	// if err != nil {
-	//     if ctx.Err() == context.DeadlineExceeded {
-	//         log.Println("Request timed out")
-	//         return
-	//     }
-	//     log.Printf("Request failed: %v", err)
-	//     return
-	// }
-	//
-	// fmt.Printf("Response received: %s\n", completion.Choices[0].Message.Content)
+	response, err := aiClient.CallWithPrompt(ctx, "Write a brief explanation of machine learning.")
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			log.Println("Request timed out")
+			return
+		}
+		log.Printf("Request failed: %v", err)
+		return
+	}
 
-	fmt.Println("✓ Timeout example completed")
+	fmt.Printf("Response received: %s\n", string(response))
+	fmt.Println("Timeout example completed")
 }
 
-// ConfigurationVariationsExample shows different configuration options
-func ConfigurationVariationsExample() {
-	fmt.Println("\n=== Configuration Variations ===")
+// TemplateVariablesExample demonstrates using prompt templates with variable substitution.
+func TemplateVariablesExample(factory *client.ClientFactory) {
+	fmt.Println("\n=== Template Variables Example ===")
 
-	// Standard OpenAI configuration
-	standardConfig := &AIConfig{
+	config := &types.AIConfig{
 		Provider:    "openai",
-		APIKey:      "your-api-key",
-		Model:       "gpt-5.4-mini", // Default model
-		MaxTokens:   1000,           // Default max tokens
-		Temperature: 0.7,            // Default temperature
+		APIKey:      os.Getenv("OPENAI_API_KEY"),
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
+		Model:       "gpt-4o-mini",
+		MaxTokens:   1000,
+		Temperature: 0.7,
 	}
-	fmt.Printf("Standard config: %+v\n", standardConfig)
 
-	// Azure OpenAI configuration
-	azureConfig := &AIConfig{
-		Provider:    "openai",
-		APIKey:      "your-azure-api-key",
-		BaseURL:     "https://your-resource.openai.azure.com/",
-		Model:       "gpt-5.4-mini",
-		MaxTokens:   1500,
-		Temperature: 0.5,
+	aiClient, err := factory.CreateClient(config)
+	if err != nil {
+		log.Printf("Failed to create client: %v", err)
+		return
 	}
-	fmt.Printf("Azure config: %+v\n", azureConfig)
 
-	// High creativity configuration
-	creativeConfig := &AIConfig{
-		Provider:    "openai",
-		APIKey:      "your-api-key",
-		Model:       "gpt-5.4-mini",
-		MaxTokens:   2000,
-		Temperature: 0.9, // Higher temperature for more creative responses
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	prompt := "You are a {{role}}. Reply with only: I am a {{role}}."
+	variables := `{"role": "translator"}`
+
+	response, err := aiClient.CallWithPromptAndVariables(ctx, prompt, variables)
+	if err != nil {
+		log.Printf("Request failed: %v", err)
+		return
 	}
-	fmt.Printf("Creative config: %+v\n", creativeConfig)
 
-	// Deterministic configuration
-	deterministicConfig := &AIConfig{
-		Provider:    "openai",
-		APIKey:      "your-api-key",
-		Model:       "gpt-5.4-mini",
-		MaxTokens:   500,
-		Temperature: 0.0, // Lower temperature for more deterministic responses
-	}
-	fmt.Printf("Deterministic config: %+v\n", deterministicConfig)
-
-	fmt.Println("✓ Configuration variations example completed")
+	fmt.Printf("Response: %s\n", string(response))
+	fmt.Println("Template variables example completed")
 }
 
-// ErrorHandlingExample demonstrates proper error handling patterns
-func ErrorHandlingExample() {
+// ErrorHandlingExample demonstrates proper error handling using types.ErrorResponse.
+func ErrorHandlingExample(factory *client.ClientFactory) {
 	fmt.Println("\n=== Error Handling Example ===")
 
-	//ctx := context.Background()
-	//prompt := "Test prompt for error handling"
+	// Use an invalid API key to trigger an error
+	config := &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      "sk-invalid-key-for-testing",
+		Model:       "gpt-4o-mini",
+		MaxTokens:   100,
+		Temperature: 0.7,
+	}
 
-	fmt.Println("Demonstrating error handling patterns...")
+	aiClient, err := factory.CreateClient(config)
+	if err != nil {
+		log.Printf("Failed to create client: %v", err)
+		return
+	}
 
-	// Example of comprehensive error handling
-	// In actual implementation:
-	// completion, err := client.CallWithPrompt(ctx, prompt)
-	// if err != nil {
-	//     var apiErr *openai.Error
-	//     if errors.As(err, &apiErr) {
-	//         switch apiErr.Code {
-	//         case "invalid_api_key":
-	//             log.Printf("❌ Authentication failed: %s", apiErr.Message)
-	//             // Handle authentication error
-	//         case "rate_limit_exceeded":
-	//             log.Printf("⏳ Rate limit exceeded: %s", apiErr.Message)
-	//             // Handle rate limiting
-	//         case "insufficient_quota":
-	//             log.Printf("💰 Quota exceeded: %s", apiErr.Message)
-	//             // Handle quota issues
-	//         case "model_not_found":
-	//             log.Printf("🔍 Model not available: %s", apiErr.Message)
-	//             // Handle model issues
-	//         default:
-	//             log.Printf("⚠️ API error (%s): %s", apiErr.Code, apiErr.Message)
-	//         }
-	//     } else if errors.Is(err, context.DeadlineExceeded) {
-	//         log.Printf("⏰ Request timed out")
-	//     } else {
-	//         log.Printf("❌ Unexpected error: %v", err)
-	//     }
-	//     return
-	// }
-	//
-	// fmt.Printf("✅ Success: %s\n", completion.Choices[0].Message.Content)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	fmt.Println("✓ Error handling example completed")
+	_, err = aiClient.CallWithPrompt(ctx, "Test prompt for error handling")
+	if err != nil {
+		// All API errors from CallWithPrompt, CallWithPromptAndVariables, and
+		// ValidateCredentials are returned as *types.ErrorResponse, which can be
+		// inspected using errors.As for structured error handling.
+		var apiErr *types.ErrorResponse
+		if errors.As(err, &apiErr) {
+			fmt.Printf("API error - Code: %s, Message: %s\n", apiErr.Code, apiErr.Message)
+			if apiErr.Retry {
+				fmt.Println("This error is retryable")
+			}
+
+			switch apiErr.Code {
+			case "invalid_api_key":
+				fmt.Println("Action: Check your API key configuration")
+			case "rate_limit_exceeded":
+				fmt.Println("Action: Wait before retrying")
+			case "insufficient_quota":
+				fmt.Println("Action: Check your billing")
+			case "model_not_found":
+				fmt.Println("Action: Verify the model name")
+			default:
+				fmt.Printf("Action: Review error details - %s\n", apiErr.Message)
+			}
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Println("Request timed out")
+		} else {
+			fmt.Printf("Unexpected error: %v\n", err)
+		}
+	}
+
+	fmt.Println("Error handling example completed")
 }
 
-// PerformanceComparisonExample shows the performance benefits
-func PerformanceComparisonExample() {
-	fmt.Println("\n=== Performance Comparison ===")
+// ValidateCredentialsExample demonstrates credential validation before making calls.
+func ValidateCredentialsExample(factory *client.ClientFactory) {
+	fmt.Println("\n=== Validate Credentials Example ===")
 
-	fmt.Println("Old JSON-based approach:")
-	fmt.Println("1. Make HTTP request")
-	fmt.Println("2. Receive JSON bytes")
-	fmt.Println("3. json.Unmarshal() - SLOW")
-	fmt.Println("4. Access fields through structs")
-	fmt.Println("5. Memory overhead from JSON bytes")
+	config := &types.AIConfig{
+		Provider:    "openai",
+		APIKey:      os.Getenv("OPENAI_API_KEY"),
+		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
+		Model:       "gpt-4o-mini",
+		MaxTokens:   1000,
+		Temperature: 0.7,
+	}
 
-	fmt.Println("\nNew SDK-based approach:")
-	fmt.Println("1. Make SDK request")
-	fmt.Println("2. Receive native Go types - FAST")
-	fmt.Println("3. Direct field access - completion.Choices[0].Message.Content")
-	fmt.Println("4. No JSON processing overhead")
-	fmt.Println("5. Reduced memory allocations")
+	aiClient, err := factory.CreateClient(config)
+	if err != nil {
+		log.Printf("Failed to create client: %v", err)
+		return
+	}
 
-	fmt.Println("\nPerformance improvements:")
-	fmt.Println("• 40-60% faster response processing")
-	fmt.Println("• 30-50% reduction in memory usage")
-	fmt.Println("• Compile-time type safety")
-	fmt.Println("• Better error handling")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	fmt.Println("✓ Performance comparison completed")
+	if err := aiClient.ValidateCredentials(ctx); err != nil {
+		var apiErr *types.ErrorResponse
+		if errors.As(err, &apiErr) {
+			fmt.Printf("Credential validation failed - Code: %s, Message: %s\n", apiErr.Code, apiErr.Message)
+		} else {
+			fmt.Printf("Credential validation failed: %v\n", err)
+		}
+		return
+	}
+
+	fmt.Println("Credentials are valid")
+	fmt.Println("Validate credentials example completed")
 }
 
 func main() {
-	fmt.Println("OpenAI SDK Migration - Basic Usage Examples")
-	fmt.Println("==========================================")
+	fmt.Println("OpenAI SDK - Basic Usage Examples")
+	fmt.Println("=================================")
 
-	// Check for API key
-	if os.Getenv("OPENAI_API_KEY") == "" {
-		fmt.Println("⚠️ Warning: OPENAI_API_KEY environment variable not set")
-		fmt.Println("Set it with: export OPENAI_API_KEY=your_api_key_here")
-	}
+	// SetupEnvironment loads the .env file from the repo root so that environment
+	// variables (API keys, endpoints, etc.) are available without manual export.
+	// This example must be run from the repo's root directory
+	// (e.g., go run examples/openai_sdk_examples/basic_usage/main.go).
+	client.SetupEnvironment("../../../")
+
+	// SetupCurrentDirectory ensures the working directory is the repo root,
+	// which is required for resolving any root-relative paths used by the client
+	// libraries. The cleanup function restores the original directory on exit.
+	// This example must be run from the repo's root directory.
+	cleanup := client.SetupCurrentDirectory("../../../")
+	defer cleanup()
+
+	factory := client.NewClientFactory()
 
 	// Run examples
-	BasicUsageExample()
-	TimeoutExample()
-	ConfigurationVariationsExample()
-	ErrorHandlingExample()
-	PerformanceComparisonExample()
+	BasicUsageExample(factory)
+	TimeoutExample(factory)
+	TemplateVariablesExample(factory)
+	ErrorHandlingExample(factory)
+	ValidateCredentialsExample(factory)
 
-	fmt.Println("\n🎉 All basic usage examples completed!")
-	fmt.Println("\nNext steps:")
-	fmt.Println("1. Set your OPENAI_API_KEY environment variable")
-	fmt.Println("2. Replace the example types with your actual imports")
-	fmt.Println("3. Uncomment the actual API calls")
-	fmt.Println("4. Run the examples with real API calls")
+	fmt.Println("\nAll basic usage examples completed")
 }

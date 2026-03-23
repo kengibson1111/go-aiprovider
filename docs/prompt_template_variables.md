@@ -5,6 +5,7 @@ The Go AI Provider library supports prompt template variables, allowing you to c
 ## Overview
 
 Prompt template variables enable you to:
+
 - Create reusable prompt templates for common use cases
 - Dynamically customize prompts without string concatenation
 - Maintain clean separation between prompt structure and variable data
@@ -14,7 +15,7 @@ Prompt template variables enable you to:
 
 Variables in prompt templates must follow the `{{variable_name}}` format:
 
-```
+```text
 {{variable_name}}
 ```
 
@@ -27,7 +28,7 @@ Variables in prompt templates must follow the `{{variable_name}}` format:
 
 ### Valid Examples
 
-```
+```text
 {{name}}
 {{user_id}}
 {{project-name}}
@@ -37,7 +38,7 @@ Variables in prompt templates must follow the `{{variable_name}}` format:
 
 ### Invalid Examples
 
-```
+```text
 {{user name}}        // Contains space
 {{user.name}}        // Contains dot
 {{{variable}}}       // Nested braces

@@ -124,7 +124,7 @@ func (c *ClaudeClient) ValidateCredentials(ctx context.Context) error {
 
 	reqBody, err := json.Marshal(claudeReq)
 	if err != nil {
-		return fmt.Errorf("failed to marshal validation request: %w", err)
+		return &types.ErrorResponse{Code: "marshal_error", Message: fmt.Sprintf("failed to marshal validation request: %v", err)}
 	}
 
 	headers := map[string]string{
@@ -142,23 +142,23 @@ func (c *ClaudeClient) ValidateCredentials(ctx context.Context) error {
 	resp, err := c.DoRequest(ctx, httpReq)
 	if err != nil {
 		c.logger.Error("Credential validation request failed: %v", err)
-		return fmt.Errorf("credential validation failed: %w", err)
+		return &types.ErrorResponse{Code: "request_failed", Message: fmt.Sprintf("credential validation failed: %v", err)}
 	}
 
 	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid API key")
+		return &types.ErrorResponse{Code: "invalid_api_key", Message: "invalid API key"}
 	}
 
 	if resp.StatusCode == 403 {
-		return fmt.Errorf("API key does not have required permissions")
+		return &types.ErrorResponse{Code: "insufficient_permissions", Message: "API key does not have required permissions"}
 	}
 
 	if resp.StatusCode >= 400 {
 		var errorResp ClaudeErrorResponse
 		if err := json.Unmarshal(resp.Body, &errorResp); err == nil {
-			return fmt.Errorf("API error: %s", errorResp.Error.Message)
+			return &types.ErrorResponse{Code: errorResp.Error.Type, Message: errorResp.Error.Message}
 		}
-		return fmt.Errorf("API error: HTTP %d", resp.StatusCode)
+		return &types.ErrorResponse{Code: "api_error", Message: fmt.Sprintf("API error: HTTP %d", resp.StatusCode)}
 	}
 
 	c.logger.Info("Claude API credentials validated successfully")
@@ -225,7 +225,7 @@ func (c *ClaudeClient) CallWithPrompt(ctx context.Context, prompt string) ([]byt
 	reqBody, err := json.Marshal(claudeReq)
 	if err != nil {
 		c.logger.Error("Failed to marshal completion request: %v", err)
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, &types.ErrorResponse{Code: "marshal_error", Message: fmt.Sprintf("failed to marshal request: %v", err)}
 	}
 
 	headers := map[string]string{
@@ -243,12 +243,12 @@ func (c *ClaudeClient) CallWithPrompt(ctx context.Context, prompt string) ([]byt
 	resp, err := c.DoRequest(ctx, httpReq)
 	if err != nil {
 		c.logger.Error("Completion request failed: %v", err)
-		return []byte{}, fmt.Errorf("request failed: %v", err)
+		return []byte{}, &types.ErrorResponse{Code: "request_failed", Message: fmt.Sprintf("request failed: %v", err)}
 	}
 
 	if err := c.ValidateResponse(resp); err != nil {
 		c.logger.Error("Invalid response: %v", err)
-		return []byte{}, fmt.Errorf("API error: %v", err)
+		return []byte{}, &types.ErrorResponse{Code: "api_error", Message: fmt.Sprintf("API error: %v", err)}
 	}
 
 	return resp.Body, nil

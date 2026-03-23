@@ -144,7 +144,7 @@ func (c *ClaudeBedrockClient) ValidateCredentials(ctx context.Context) error {
 	}, 10, 0.1)
 	if err != nil {
 		c.logger.Error("Credential validation failed: %v", err)
-		return fmt.Errorf("credential validation failed: %w", err)
+		return &types.ErrorResponse{Code: "credential_validation_failed", Message: fmt.Sprintf("credential validation failed: %v", err)}
 	}
 
 	c.logger.Info("Claude Bedrock credentials validated successfully")
@@ -190,7 +190,7 @@ func (c *ClaudeBedrockClient) invokeModel(ctx context.Context, messages []Claude
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		c.logger.Error("Failed to marshal Bedrock request: %v", err)
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, &types.ErrorResponse{Code: "marshal_error", Message: fmt.Sprintf("failed to marshal request: %v", err)}
 	}
 
 	output, err := c.bedrockClient.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
@@ -201,7 +201,7 @@ func (c *ClaudeBedrockClient) invokeModel(ctx context.Context, messages []Claude
 	})
 	if err != nil {
 		c.logger.Error("Bedrock InvokeModel failed: %v", err)
-		return nil, fmt.Errorf("bedrock request failed: %w", err)
+		return nil, &types.ErrorResponse{Code: "request_failed", Message: fmt.Sprintf("bedrock request failed: %v", err)}
 	}
 
 	return output.Body, nil

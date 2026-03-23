@@ -929,19 +929,19 @@ func (c *OpenAIClient) handleSDKError(err error) error {
 
 	// Check for common HTTP status codes in error messages
 	if strings.Contains(errMsg, "401 Unauthorized") {
-		return fmt.Errorf("invalid API key: please check your OpenAI API key configuration")
+		return &types.ErrorResponse{Code: "invalid_api_key", Message: "invalid API key: please check your OpenAI API key configuration"}
 	}
 	if strings.Contains(errMsg, "403 Forbidden") {
-		return fmt.Errorf("insufficient permissions: your API key does not have required permissions")
+		return &types.ErrorResponse{Code: "insufficient_permissions", Message: "your API key does not have required permissions"}
 	}
 	if strings.Contains(errMsg, "429 Too Many Requests") {
-		return fmt.Errorf("rate limit exceeded: too many requests, please wait before retrying")
+		return &types.ErrorResponse{Code: "rate_limit_exceeded", Message: "too many requests, please wait before retrying", Retry: true}
 	}
 	if strings.Contains(errMsg, "404 Not Found") {
-		return fmt.Errorf("endpoint not found: please check your base URL configuration")
+		return &types.ErrorResponse{Code: "endpoint_not_found", Message: "please check your base URL configuration"}
 	}
 	if strings.Contains(errMsg, "500 Internal Server Error") || strings.Contains(errMsg, "502 Bad Gateway") || strings.Contains(errMsg, "503 Service Unavailable") {
-		return fmt.Errorf("OpenAI server error: HTTP 500 - please try again later")
+		return &types.ErrorResponse{Code: "server_error", Message: "OpenAI server error - please try again later", Retry: true}
 	}
 
 	// If we have an apiErr but it wasn't handled above, try to convert it anyway
@@ -953,14 +953,14 @@ func (c *OpenAIClient) handleSDKError(err error) error {
 	if strings.Contains(errMsg, "connection refused") || strings.Contains(errMsg, "no such host") ||
 		strings.Contains(errMsg, "connectex") || strings.Contains(errMsg, "EOF") ||
 		strings.Contains(errMsg, "connection reset") || strings.Contains(errMsg, "broken pipe") {
-		return fmt.Errorf("network error: unable to connect to OpenAI API, please check your internet connection")
+		return &types.ErrorResponse{Code: "network_error", Message: "unable to connect to OpenAI API, please check your internet connection"}
 	}
 	if strings.Contains(errMsg, "timeout") || strings.Contains(errMsg, "deadline exceeded") {
-		return fmt.Errorf("request timeout: the request took too long to complete, please try again")
+		return &types.ErrorResponse{Code: "request_timeout", Message: "the request took too long to complete, please try again", Retry: true}
 	}
 
 	// Fallback for other errors
-	return fmt.Errorf("request failed: %w", err)
+	return &types.ErrorResponse{Code: "request_failed", Message: fmt.Sprintf("request failed: %v", err)}
 }
 
 // convertAPIErrorToUserFriendly converts OpenAI API errors to user-friendly messages.
@@ -1010,25 +1010,24 @@ func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error
 
 	// Handle nil apiErr case
 	if apiErr == nil {
-		return fmt.Errorf("OpenAI API error: unknown error occurred")
+		return &types.ErrorResponse{Code: "unknown", Message: "OpenAI API error: unknown error occurred"}
 	}
 
 	// Handle errors by code first (most specific)
 	if apiErr.Code != "" {
 		switch apiErr.Code {
 		case "invalid_api_key":
-			return fmt.Errorf("invalid API key: please check your OpenAI API key configuration")
+			return &types.ErrorResponse{Code: "invalid_api_key", Message: "please check your OpenAI API key configuration"}
 		case "insufficient_quota":
-			return fmt.Errorf("quota exceeded: your OpenAI account has insufficient quota, please check your billing")
+			return &types.ErrorResponse{Code: "insufficient_quota", Message: "your OpenAI account has insufficient quota, please check your billing"}
 		case "rate_limit_exceeded":
-			return fmt.Errorf("rate limit exceeded: too many requests, please wait before retrying")
+			return &types.ErrorResponse{Code: "rate_limit_exceeded", Message: "too many requests, please wait before retrying", Retry: true}
 		case "model_not_found":
-			return fmt.Errorf("model not found: %s", apiErr.Message)
+			return &types.ErrorResponse{Code: "model_not_found", Message: apiErr.Message}
 		case "context_length_exceeded":
-			return fmt.Errorf("context length exceeded: the request is too long for the model's context window")
+			return &types.ErrorResponse{Code: "context_length_exceeded", Message: "the request is too long for the model's context window"}
 		default:
-			// For unknown error codes, provide the original message with context
-			return fmt.Errorf("OpenAI API error (%s): %s", apiErr.Code, apiErr.Message)
+			return &types.ErrorResponse{Code: apiErr.Code, Message: apiErr.Message}
 		}
 	}
 
@@ -1036,41 +1035,39 @@ func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error
 	if apiErr.Type != "" {
 		switch apiErr.Type {
 		case "invalid_request_error":
-			// Check message content for specific error types
 			msgLower := strings.ToLower(apiErr.Message)
 			if strings.Contains(msgLower, "invalid api key") || strings.Contains(msgLower, "api key") {
-				return fmt.Errorf("invalid API key: please check your OpenAI API key configuration")
+				return &types.ErrorResponse{Code: "invalid_api_key", Message: "please check your OpenAI API key configuration"}
 			}
 			if strings.Contains(msgLower, "permission") || strings.Contains(msgLower, "insufficient") {
-				return fmt.Errorf("insufficient permissions: your API key does not have required permissions")
+				return &types.ErrorResponse{Code: "insufficient_permissions", Message: "your API key does not have required permissions"}
 			}
 			if strings.Contains(msgLower, "model") {
-				return fmt.Errorf("model error: %s", apiErr.Message)
+				return &types.ErrorResponse{Code: "model_error", Message: apiErr.Message}
 			}
-			return fmt.Errorf("invalid request: %s", apiErr.Message)
+			return &types.ErrorResponse{Code: "invalid_request", Message: apiErr.Message}
 		case "rate_limit_error":
-			return fmt.Errorf("rate limit exceeded: too many requests, please wait before retrying")
+			return &types.ErrorResponse{Code: "rate_limit_exceeded", Message: "too many requests, please wait before retrying", Retry: true}
 		case "server_error", "internal_error":
-			return fmt.Errorf("OpenAI server error: %s (please try again later)", apiErr.Message)
+			return &types.ErrorResponse{Code: "server_error", Message: apiErr.Message, Retry: true}
 		case "service_unavailable":
-			return fmt.Errorf("OpenAI service unavailable: %s (please try again later)", apiErr.Message)
+			return &types.ErrorResponse{Code: "service_unavailable", Message: apiErr.Message, Retry: true}
 		default:
-			return fmt.Errorf("OpenAI API error (%s): %s", apiErr.Type, apiErr.Message)
+			return &types.ErrorResponse{Code: apiErr.Type, Message: apiErr.Message}
 		}
 	}
 
 	// Fallback for errors without code or type
 	if apiErr.Message != "" {
-		// Check if this looks like a server error
 		if strings.Contains(strings.ToLower(apiErr.Message), "internal server error") ||
 			strings.Contains(strings.ToLower(apiErr.Message), "server error") {
-			return fmt.Errorf("OpenAI server error: HTTP 500 - please try again later")
+			return &types.ErrorResponse{Code: "server_error", Message: "OpenAI server error - please try again later", Retry: true}
 		}
-		return fmt.Errorf("OpenAI API error: %s", apiErr.Message)
+		return &types.ErrorResponse{Code: "api_error", Message: apiErr.Message}
 	}
 
-	// Last resort fallback - this might be a server error without message
-	return fmt.Errorf("OpenAI server error: HTTP 500 - please try again later")
+	// Last resort fallback
+	return &types.ErrorResponse{Code: "server_error", Message: "OpenAI server error - please try again later", Retry: true}
 }
 
 // safeErrorString safely converts an error to a string, handling potential nil pointer dereferences
@@ -1133,22 +1130,22 @@ func (c *OpenAIClient) handleStreamingError(err error) error {
 
 		// Handle streaming-specific scenarios
 		if strings.Contains(errMsg, "stream") || strings.Contains(errMsg, "streaming") {
-			return fmt.Errorf("streaming error: %s", errMsg)
+			return &types.ErrorResponse{Code: "streaming_error", Message: errMsg, Retry: true}
 		}
 
 		// Handle connection issues that are more common with streaming
 		if strings.Contains(errMsg, "connection") || strings.Contains(errMsg, "network") {
-			return fmt.Errorf("streaming connection error: %s - streaming requires stable network connection", errMsg)
+			return &types.ErrorResponse{Code: "streaming_connection_error", Message: errMsg, Details: "streaming requires stable network connection", Retry: true}
 		}
 
 		// Handle timeout issues that are more critical for streaming
 		if strings.Contains(errMsg, "timeout") || strings.Contains(errMsg, "deadline") {
-			return fmt.Errorf("streaming timeout: %s - consider increasing timeout for streaming requests", errMsg)
+			return &types.ErrorResponse{Code: "streaming_timeout", Message: errMsg, Details: "consider increasing timeout for streaming requests", Retry: true}
 		}
 
 		return sdkErr
 	}
 
 	// Fallback for streaming errors that don't match standard patterns
-	return fmt.Errorf("streaming request failed: %w", err)
+	return &types.ErrorResponse{Code: "streaming_failed", Message: fmt.Sprintf("streaming request failed: %v", err)}
 }

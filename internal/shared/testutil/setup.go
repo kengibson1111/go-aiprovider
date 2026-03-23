@@ -81,3 +81,47 @@ func SetupBenchmarkEnvironment(b *testing.B, repoRoot string) {
 
 	os.Chdir(originalWd)
 }
+
+// SetupExampleEnvironment loads the .env file from the given repoRoot directory
+// for use in example programs (not tests). It panics on failure since examples
+// cannot proceed without environment configuration.
+//
+// repoRoot should be the relative path from the caller's working directory to the repo root.
+// When running from the repo root (e.g., go run examples/.../main.go), use "./".
+func SetupExampleEnvironment(repoRoot string) {
+	originalWd, err := os.Getwd()
+	if err != nil {
+		panic("failed to get working directory: " + err.Error())
+	}
+
+	if err := os.Chdir(repoRoot); err != nil {
+		panic("failed to change to repo root directory: " + err.Error())
+	}
+
+	if err := env.LoadEnvConfig(); err != nil {
+		panic("failed to load environment config: " + err.Error())
+	}
+
+	os.Chdir(originalWd)
+}
+
+// SetupExampleCurrentDirectory changes to the repo root directory and returns a
+// cleanup function that restores the original working directory. For use in
+// example programs (not tests). It panics on failure.
+//
+// repoRoot should be the relative path from the caller's working directory to the repo root.
+// When running from the repo root (e.g., go run examples/.../main.go), use "./".
+func SetupExampleCurrentDirectory(repoRoot string) func() {
+	originalWd, err := os.Getwd()
+	if err != nil {
+		panic("failed to get working directory: " + err.Error())
+	}
+
+	if err := os.Chdir(repoRoot); err != nil {
+		panic("failed to change to repo root directory: " + err.Error())
+	}
+
+	return func() {
+		os.Chdir(originalWd)
+	}
+}

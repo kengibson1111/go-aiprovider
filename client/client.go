@@ -7,9 +7,32 @@ import (
 
 	"github.com/kengibson1111/go-aiprovider/claudeclient"
 	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
+	"github.com/kengibson1111/go-aiprovider/internal/shared/testutil"
 	"github.com/kengibson1111/go-aiprovider/openaiclient"
 	"github.com/kengibson1111/go-aiprovider/types"
 )
+
+// SetupEnvironment loads the .env file from the given repoRoot directory so that
+// environment variables (API keys, endpoints, etc.) are available to the process.
+// Panics on failure. This is a convenience wrapper around the internal testutil package
+// for use in examples and non-test programs.
+//
+// repoRoot should be the relative path from the caller's working directory to the repo root.
+// When running from the repo root, use "./".
+func SetupEnvironment(repoRoot string) {
+	testutil.SetupExampleEnvironment(repoRoot)
+}
+
+// SetupCurrentDirectory changes the working directory to repoRoot and returns a
+// cleanup function that restores the original directory. Panics on failure.
+// This is a convenience wrapper around the internal testutil package for use in
+// examples and non-test programs.
+//
+// repoRoot should be the relative path from the caller's working directory to the repo root.
+// When running from the repo root, use "./".
+func SetupCurrentDirectory(repoRoot string) func() {
+	return testutil.SetupExampleCurrentDirectory(repoRoot)
+}
 
 // AIClient defines the interface for AI service clients
 type AIClient interface {
