@@ -211,18 +211,23 @@ go-aiprovider/
 │       ├── testutil/              # Test setup helpers
 │       └── utils/                 # HTTP client, template processor
 ├── examples/
-│   └── openai_client/             # Runnable OpenAI example
+│   ├── claude_client/             # Runnable Claude (Anthropic) example
+│   ├── claude_bedrock/            # Runnable Claude via Amazon Bedrock example
+│   ├── openai_client/             # Runnable OpenAI example
+│   └── openai_azure/             # Runnable Azure OpenAI example
 └── docs/                          # Provider setup guides
 ```
 
 ## Examples
 
-See [examples/openai_client](examples/openai_client/) for a runnable example covering client creation, prompt calls, template variables, error handling, and credential validation.
+Each example directory contains a `main.go` with five patterns: client creation, prompt calls, template variables, error handling, and credential validation.
 
-```powershell
-cd examples\openai_client
-go run main.go
-```
+| Example | Provider | Auth | Run command |
+| --- | --- | --- | --- |
+| [claude_client](examples/claude_client/) | Claude (Anthropic) | API key | `cd examples\claude_client; go run main.go` |
+| [claude_bedrock](examples/claude_bedrock/) | Claude via Bedrock | AWS credential chain | `cd examples\claude_bedrock; go run main.go` |
+| [openai_client](examples/openai_client/) | OpenAI | API key | `cd examples\openai_client; go run main.go` |
+| [openai_azure](examples/openai_azure/) | Azure OpenAI | Microsoft Entra ID | `cd examples\openai_azure; go run main.go` |
 
 ## Testing
 
