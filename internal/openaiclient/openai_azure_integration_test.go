@@ -33,8 +33,8 @@ func TestOpenAIAzureIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *OpenAIAzureIntegrationTestSuite) SetupSuite() {
-	testutil.SetupEnvironment(s.T(), "../")
-	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../")
+	testutil.SetupEnvironment(s.T(), "../../")
+	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../../")
 
 	// Skip if required Azure env vars are not set
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")

@@ -33,8 +33,8 @@ func TestOpenAIClientIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *OpenAIClientIntegrationTestSuite) SetupSuite() {
-	testutil.SetupEnvironment(s.T(), "../")
-	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../")
+	testutil.SetupEnvironment(s.T(), "../../")
+	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../../")
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kengibson1111/go-aiprovider/claudeclient"
+	"github.com/kengibson1111/go-aiprovider/internal/claudeclient"
+	"github.com/kengibson1111/go-aiprovider/internal/openaiclient"
 	"github.com/kengibson1111/go-aiprovider/internal/shared/logging"
 	"github.com/kengibson1111/go-aiprovider/internal/shared/testutil"
-	"github.com/kengibson1111/go-aiprovider/openaiclient"
 	"github.com/kengibson1111/go-aiprovider/types"
 )
 

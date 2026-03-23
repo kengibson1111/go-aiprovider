@@ -1017,7 +1017,7 @@ func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error
 	if apiErr.Code != "" {
 		switch apiErr.Code {
 		case "invalid_api_key":
-			return &types.ErrorResponse{Code: "invalid_api_key", Message: "please check your OpenAI API key configuration"}
+			return &types.ErrorResponse{Code: "invalid_api_key", Message: "invalid API key: please check your OpenAI API key configuration"}
 		case "insufficient_quota":
 			return &types.ErrorResponse{Code: "insufficient_quota", Message: "your OpenAI account has insufficient quota, please check your billing"}
 		case "rate_limit_exceeded":
@@ -1037,7 +1037,7 @@ func (c *OpenAIClient) convertAPIErrorToUserFriendly(apiErr *openai.Error) error
 		case "invalid_request_error":
 			msgLower := strings.ToLower(apiErr.Message)
 			if strings.Contains(msgLower, "invalid api key") || strings.Contains(msgLower, "api key") {
-				return &types.ErrorResponse{Code: "invalid_api_key", Message: "please check your OpenAI API key configuration"}
+				return &types.ErrorResponse{Code: "invalid_api_key", Message: "invalid API key: please check your OpenAI API key configuration"}
 			}
 			if strings.Contains(msgLower, "permission") || strings.Contains(msgLower, "insufficient") {
 				return &types.ErrorResponse{Code: "insufficient_permissions", Message: "your API key does not have required permissions"}

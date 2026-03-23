@@ -31,8 +31,8 @@ func TestClaudeClientIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *ClaudeClientIntegrationTestSuite) SetupSuite() {
-	testutil.SetupEnvironment(s.T(), "../")
-	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../")
+	testutil.SetupEnvironment(s.T(), "../../")
+	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../../")
 
 	apiKey := os.Getenv("CLAUDE_API_KEY")
 	if apiKey == "" {

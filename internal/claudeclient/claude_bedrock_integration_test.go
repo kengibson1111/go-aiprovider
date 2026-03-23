@@ -31,8 +31,8 @@ func TestClaudeBedrockIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *ClaudeBedrockIntegrationTestSuite) SetupSuite() {
-	testutil.SetupEnvironment(s.T(), "../")
-	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../")
+	testutil.SetupEnvironment(s.T(), "../../")
+	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../../")
 
 	region := os.Getenv("CLAUDE_BEDROCK_REGION")
 	if region == "" {
