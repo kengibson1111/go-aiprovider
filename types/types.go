@@ -10,6 +10,7 @@ const (
 	ProviderClaudeBedrock = "claude-bedrock"
 	ProviderOpenAI        = "openai"
 	ProviderOpenAIAzure   = "openai-azure"
+	ProviderOpenAIAzureUP = "openai-azure-up"
 )
 
 // ErrorResponse represents a structured error response.

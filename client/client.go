@@ -85,6 +85,8 @@ func (f *ClientFactory) CreateClient(config *types.AIConfig) (AIClient, error) {
 		return openaiclient.NewOpenAIClient(config)
 	case types.ProviderOpenAIAzure:
 		return openaiclient.NewOpenAIAzureClient(config)
+	case types.ProviderOpenAIAzureUP:
+		return openaiclient.NewOpenAIAzureUPClient(config)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", config.Provider)
 	}
