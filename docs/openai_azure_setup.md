@@ -93,9 +93,9 @@ The output contains three values you need for your `.env` file:
 
 | Output field | Environment variable           |
 | ------------ | ------------------------------ |
-| `appId`      | `OPENAI_AZURE_CLIENT_ID`       |
-| `password`   | `OPENAI_AZURE_CLIENT_SECRET`   |
-| `tenant`     | `OPENAI_AZURE_TENANT_ID`       |
+| `appId`      | `OPENAI_AZURE_SP_CLIENT_ID`       |
+| `password`   | `OPENAI_AZURE_SP_CLIENT_SECRET`   |
+| `tenant`     | `OPENAI_AZURE_SP_TENANT_ID`       |
 
 ## Step 7: Assign RBAC Role to the Service Principal
 
@@ -148,9 +148,9 @@ Add the following to your `.env` file (see `.env.sample` for the full template):
 OPENAI_AZURE_ENDPOINT=https://my-openai-resource.openai.azure.com
 OPENAI_AZURE_API_VERSION=2024-12-01-preview
 OPENAI_AZURE_MODEL=gpt-4o-mini
-OPENAI_AZURE_TENANT_ID=<tenant from step 6>
-OPENAI_AZURE_CLIENT_ID=<appId from step 6>
-OPENAI_AZURE_CLIENT_SECRET=<password from step 6>
+OPENAI_AZURE_SP_TENANT_ID=<tenant from step 6>
+OPENAI_AZURE_SP_CLIENT_ID=<appId from step 6>
+OPENAI_AZURE_SP_CLIENT_SECRET=<password from step 6>
 ```
 
 ## Step 10: Run Integration Tests

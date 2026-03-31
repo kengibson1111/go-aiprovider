@@ -12,17 +12,17 @@
 // OPENAI_AZURE_ naming convention. The client maps these to the standard AZURE_ variables
 // expected by the azidentity.DefaultAzureCredential:
 //
-//   - OPENAI_AZURE_TENANT_ID   → AZURE_TENANT_ID
-//   - OPENAI_AZURE_CLIENT_ID   → AZURE_CLIENT_ID
-//   - OPENAI_AZURE_CLIENT_SECRET → AZURE_CLIENT_SECRET
+//   - OPENAI_AZURE_SP_TENANT_ID   → AZURE_TENANT_ID
+//   - OPENAI_AZURE_SP_CLIENT_ID   → AZURE_CLIENT_ID
+//   - OPENAI_AZURE_SP_CLIENT_SECRET → AZURE_CLIENT_SECRET
 //
 // # Required Configuration
 //
 //   - AIConfig.BaseURL: Azure OpenAI endpoint (e.g., https://your-resource.openai.azure.com)
 //   - AIConfig.Model: Deployment name in Azure (e.g., gpt-4o-mini)
-//   - OPENAI_AZURE_TENANT_ID: Microsoft Entra tenant (directory) ID
-//   - OPENAI_AZURE_CLIENT_ID: App registration client (application) ID
-//   - OPENAI_AZURE_CLIENT_SECRET: App registration client secret
+//   - OPENAI_AZURE_SP_TENANT_ID: Microsoft Entra tenant (directory) ID
+//   - OPENAI_AZURE_SP_CLIENT_ID: App registration client (application) ID
+//   - OPENAI_AZURE_SP_CLIENT_SECRET: App registration client secret
 //
 // # Required Environment Variables
 //
@@ -54,9 +54,9 @@ var requiredAzureEnvVars = map[string]string{
 // requiredAzureIdentityEnvVars lists the OPENAI_AZURE_ environment variables that must be set
 // for Entra ID authentication, along with the standard AZURE_ variables they map to.
 var requiredAzureIdentityEnvVars = map[string]string{
-	"OPENAI_AZURE_TENANT_ID":     "AZURE_TENANT_ID",
-	"OPENAI_AZURE_CLIENT_ID":     "AZURE_CLIENT_ID",
-	"OPENAI_AZURE_CLIENT_SECRET": "AZURE_CLIENT_SECRET",
+	"OPENAI_AZURE_SP_TENANT_ID":     "AZURE_TENANT_ID",
+	"OPENAI_AZURE_SP_CLIENT_ID":     "AZURE_CLIENT_ID",
+	"OPENAI_AZURE_SP_CLIENT_SECRET": "AZURE_CLIENT_SECRET",
 }
 
 // setAzureEnvFromConfig validates that all required OPENAI_AZURE_ environment variables

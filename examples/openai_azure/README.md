@@ -10,9 +10,9 @@ Basic examples showing how to use the `go-aiprovider` client with Azure OpenAI S
    OPENAI_AZURE_ENDPOINT=https://your-resource.openai.azure.com
    OPENAI_AZURE_API_VERSION=2024-12-01-preview
    OPENAI_AZURE_MODEL=gpt-4o-mini
-   OPENAI_AZURE_TENANT_ID=your_tenant_id
-   OPENAI_AZURE_CLIENT_ID=your_client_id
-   OPENAI_AZURE_CLIENT_SECRET=your_client_secret
+   OPENAI_AZURE_SP_TENANT_ID=your_tenant_id
+   OPENAI_AZURE_SP_CLIENT_ID=your_client_id
+   OPENAI_AZURE_SP_CLIENT_SECRET=your_client_secret
    ```
 
 2. Install dependencies:
@@ -78,4 +78,4 @@ response, err := aiClient.CallWithPromptAndVariables(ctx, prompt, variables)
 
 ## Authentication
 
-This example uses Microsoft Entra ID authentication via `DefaultAzureCredential`. The `OPENAI_AZURE_TENANT_ID`, `OPENAI_AZURE_CLIENT_ID`, and `OPENAI_AZURE_CLIENT_SECRET` environment variables are mapped internally to the standard `AZURE_*` variables expected by the Azure Identity SDK. See [Azure OpenAI Setup](../../docs/openai_azure_setup.md) for detailed configuration instructions.
+This example uses Microsoft Entra ID authentication via `DefaultAzureCredential`. The `OPENAI_AZURE_SP_TENANT_ID`, `OPENAI_AZURE_SP_CLIENT_ID`, and `OPENAI_AZURE_SP_CLIENT_SECRET` environment variables are mapped internally to the standard `AZURE_*` variables expected by the Azure Identity SDK. See [Azure OpenAI Setup](../../docs/openai_azure_setup.md) for detailed configuration instructions.

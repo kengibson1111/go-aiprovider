@@ -173,9 +173,9 @@ Uses Microsoft Entra ID (service principal) authentication. No API key needed.
 OPENAI_AZURE_ENDPOINT=https://your-resource.openai.azure.com
 OPENAI_AZURE_API_VERSION=2024-12-01-preview
 OPENAI_AZURE_MODEL=gpt-4o-mini
-OPENAI_AZURE_TENANT_ID=your_tenant_id
-OPENAI_AZURE_CLIENT_ID=your_client_id
-OPENAI_AZURE_CLIENT_SECRET=your_client_secret
+OPENAI_AZURE_SP_TENANT_ID=your_tenant_id
+OPENAI_AZURE_SP_CLIENT_ID=your_client_id
+OPENAI_AZURE_SP_CLIENT_SECRET=your_client_secret
 ```
 
 ```go
