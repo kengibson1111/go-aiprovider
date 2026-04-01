@@ -20,7 +20,8 @@ A Go library for unified AI provider integration, supporting multiple AI service
 | Claude (Anthropic) | `claude` | API key | Custom HTTP client |
 | Claude via Amazon Bedrock | `claude-bedrock` | AWS credential chain | AWS SDK v2 |
 | OpenAI | `openai` | API key | OpenAI Go SDK v2 |
-| Azure OpenAI Service | `openai-azure` | Microsoft Entra ID | OpenAI Go SDK v2 + Azure identity |
+| Azure OpenAI Service | `openai-azure` | Microsoft Entra ID (service principal) | OpenAI Go SDK v2 + Azure identity |
+| Azure OpenAI Service (UP) | `openai-azure-up` | Microsoft Entra ID (username/password) | OpenAI Go SDK v2 + Azure identity |
 
 ## Installation
 
@@ -101,7 +102,7 @@ response, err := aiClient.CallWithPromptAndVariables(ctx, prompt, variables)
 
 ```go
 type AIConfig struct {
-    Provider    string  `json:"provider"`    // "claude", "claude-bedrock", "openai", or "openai-azure"
+    Provider    string  `json:"provider"`    // "claude", "claude-bedrock", "openai", "openai-azure", or "openai-azure-up"
     APIKey      string  `json:"apiKey"`      // API key (not needed for claude-bedrock or openai-azure)
     BaseURL     string  `json:"baseUrl"`     // Optional custom endpoint
     Model       string  `json:"model"`       // Model or deployment name
@@ -186,6 +187,28 @@ config := &types.AIConfig{
 
 See [docs/openai_azure_setup.md](docs/openai_azure_setup.md) for resource creation, RBAC, and troubleshooting.
 
+### Azure OpenAI Service (UsernamePassword)
+
+Uses Microsoft Entra ID (username/password) authentication via the ROPC flow. No API key needed. This is deprecated by Microsoft but useful where service principal credentials are unavailable.
+
+```env
+OPENAI_AZURE_ENDPOINT=https://your-resource.openai.azure.com
+OPENAI_AZURE_API_VERSION=2024-12-01-preview
+OPENAI_AZURE_MODEL=gpt-4o-mini
+OPENAI_AZURE_TENANT_ID=your_tenant_id
+OPENAI_AZURE_CLIENT_ID=your_client_id
+OPENAI_AZURE_UP_USERNAME=user@yourtenant.onmicrosoft.com
+OPENAI_AZURE_UP_PASSWORD=your_password
+```
+
+```go
+config := &types.AIConfig{
+    Provider: "openai-azure-up",
+}
+```
+
+See [docs/openai_azure_up_setup.md](docs/openai_azure_up_setup.md) for Entra ID user creation, ROPC configuration, and troubleshooting.
+
 ## Environment Setup
 
 Copy the sample file and fill in the values for the providers you need:
@@ -214,7 +237,8 @@ go-aiprovider/
 │   ├── claude_client/             # Runnable Claude (Anthropic) example
 │   ├── claude_bedrock/            # Runnable Claude via Amazon Bedrock example
 │   ├── openai_client/             # Runnable OpenAI example
-│   └── openai_azure/             # Runnable Azure OpenAI example
+│   ├── openai_azure/             # Runnable Azure OpenAI example
+│   └── openai_azure_up/          # Runnable Azure OpenAI (UsernamePassword) example
 └── docs/                          # Provider setup guides
 ```
 
@@ -227,7 +251,8 @@ Each example directory contains a `main.go` with five patterns: client creation,
 | [claude_client](examples/claude_client/) | Claude (Anthropic) | API key | `cd examples\claude_client; go run main.go` |
 | [claude_bedrock](examples/claude_bedrock/) | Claude via Bedrock | AWS credential chain | `cd examples\claude_bedrock; go run main.go` |
 | [openai_client](examples/openai_client/) | OpenAI | API key | `cd examples\openai_client; go run main.go` |
-| [openai_azure](examples/openai_azure/) | Azure OpenAI | Microsoft Entra ID | `cd examples\openai_azure; go run main.go` |
+| [openai_azure](examples/openai_azure/) | Azure OpenAI | Microsoft Entra ID (SP) | `cd examples\openai_azure; go run main.go` |
+| [openai_azure_up](examples/openai_azure_up/) | Azure OpenAI | Microsoft Entra ID (UP) | `cd examples\openai_azure_up; go run main.go` |
 
 ## Testing
 
