@@ -5,6 +5,7 @@ package claudeclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -36,12 +37,12 @@ func (s *ClaudeClientIntegrationTestSuite) SetupSuite() {
 
 	apiKey := os.Getenv("CLAUDE_API_KEY")
 	if apiKey == "" {
-		s.T().Skip("CLAUDE_API_KEY not set, skipping Claude integration tests")
+		s.T().Skip("CLAUDE_API_KEY not set, skipping Claude direct integration tests")
 	}
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-6"
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude direct integration tests")
 	}
 
 	config := &types.AIConfig{
@@ -198,8 +199,8 @@ func (s *ClaudeClientIntegrationTestSuite) TestNewClaudeClient_Defaults() {
 	client, err := NewClaudeClient(config)
 	require.NoError(s.T(), err, "Client creation with defaults should succeed")
 
-	assert.Equal(s.T(), "claude-sonnet-4-6", client.model,
-		"Default model should be claude-sonnet-4-6")
+	assert.Equal(s.T(), os.Getenv("CLAUDE_MODEL"), client.model,
+		fmt.Sprintf("Default model should be %s", os.Getenv("CLAUDE_MODEL")))
 	assert.Equal(s.T(), 1000, client.maxTokens,
 		"Default maxTokens should be 1000")
 	assert.InDelta(s.T(), 0.7, client.temperature, 0.001,
@@ -214,7 +215,7 @@ func (s *ClaudeClientIntegrationTestSuite) TestNewClaudeClient_CustomConfig() {
 		Provider:    "claude",
 		APIKey:      apiKey,
 		BaseURL:     os.Getenv("CLAUDE_API_ENDPOINT"),
-		Model:       "claude-sonnet-4-6",
+		Model:       os.Getenv("CLAUDE_MODEL"),
 		MaxTokens:   2000,
 		Temperature: 0.5,
 	}
@@ -222,7 +223,7 @@ func (s *ClaudeClientIntegrationTestSuite) TestNewClaudeClient_CustomConfig() {
 	client, err := NewClaudeClient(config)
 	require.NoError(s.T(), err, "Client creation with custom config should succeed")
 
-	assert.Equal(s.T(), "claude-sonnet-4-6", client.model)
+	assert.Equal(s.T(), os.Getenv("CLAUDE_MODEL"), client.model)
 	assert.Equal(s.T(), 2000, client.maxTokens)
 	assert.InDelta(s.T(), 0.5, client.temperature, 0.001)
 }
