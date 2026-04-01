@@ -5,6 +5,7 @@ package openaiclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -38,14 +39,19 @@ func (s *OpenAIClientIntegrationTestSuite) SetupSuite() {
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
+		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI direct integration tests")
+	}
+
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI direct integration tests")
 	}
 
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := NewOpenAIClient(config)
@@ -76,7 +82,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestValidateCredentials_InvalidKey() 
 	config := &types.AIConfig{
 		Provider: "openai",
 		APIKey:   "sk-invalid-key-for-testing",
-		Model:    "gpt-5.4-mini",
+		Model:    os.Getenv("OPENAI_MODEL"),
 	}
 	invalidClient, err := NewOpenAIClient(config)
 	require.NoError(s.T(), err, "Client creation should succeed even with invalid key")
@@ -261,7 +267,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestCallWithPromptAndVariables_Invali
 // TestGetModel verifies the model getter returns the configured model
 func (s *OpenAIClientIntegrationTestSuite) TestGetModel() {
 	model := s.client.GetModel()
-	assert.Equal(s.T(), "gpt-5.4-mini", model,
+	assert.Equal(s.T(), os.Getenv("OPENAI_MODEL"), model,
 		"GetModel should return the configured model")
 }
 
@@ -307,7 +313,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_Defaults() {
 	defer client.CloseIdleConnections()
 
 	assert.Equal(s.T(), string(openai.ChatModelGPT4oMini), client.GetModel(),
-		"Default model should be gpt-5.4-mini")
+		fmt.Sprintf("Default model should be %s", os.Getenv("OPENAI_MODEL")))
 	assert.Equal(s.T(), 1000, client.maxTokens,
 		"Default maxTokens should be 1000")
 	assert.InDelta(s.T(), 0.7, client.temperature, 0.001,
@@ -322,7 +328,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 		Provider:    "openai",
 		APIKey:      apiKey,
 		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:       "gpt-5.4-mini",
+		Model:       os.Getenv("OPENAI_MODEL"),
 		MaxTokens:   2000,
 		Temperature: 0.5,
 	}
@@ -331,7 +337,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 	require.NoError(s.T(), err, "Client creation with custom config should succeed")
 	defer client.CloseIdleConnections()
 
-	assert.Equal(s.T(), "gpt-5.4-mini", client.GetModel())
+	assert.Equal(s.T(), os.Getenv("OPENAI_MODEL"), client.GetModel())
 	assert.Equal(s.T(), 2000, client.maxTokens)
 	assert.InDelta(s.T(), 0.5, client.temperature, 0.001)
 }

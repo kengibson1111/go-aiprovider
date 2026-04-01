@@ -1,4 +1,5 @@
 //go:build integration
+// +build integration
 
 package openaiclient
 
@@ -18,65 +19,71 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// OpenAIAzureIntegrationTestSuite tests the OpenAI client against Azure OpenAI Service
-type OpenAIAzureIntegrationTestSuite struct {
+// OpenAIAzureUPIntegrationTestSuite tests the OpenAI client against Azure OpenAI Service
+// using UsernamePasswordCredential authentication.
+type OpenAIAzureUPIntegrationTestSuite struct {
 	suite.Suite
 	cleanupCwd func()
 	client     *OpenAIClient
 }
 
-func TestOpenAIAzureIntegrationTestSuite(t *testing.T) {
+func TestOpenAIAzureUPIntegrationTestSuite(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration tests in short mode")
 	}
-	suite.Run(t, new(OpenAIAzureIntegrationTestSuite))
+	suite.Run(t, new(OpenAIAzureUPIntegrationTestSuite))
 }
 
-func (s *OpenAIAzureIntegrationTestSuite) SetupSuite() {
+func (s *OpenAIAzureUPIntegrationTestSuite) SetupSuite() {
 	testutil.SetupEnvironment(s.T(), "../../")
 	s.cleanupCwd = testutil.SetupCurrentDirectory(s.T(), "../../")
 
-	// Skip if required Azure env vars are not set
+	// Skip if required Azure UP env vars are not set
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
 	}
 
 	model := os.Getenv("OPENAI_AZURE_MODEL")
 	if model == "" {
-		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
 	}
 
 	version := os.Getenv("OPENAI_AZURE_API_VERSION")
 	if version == "" {
-		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
 	}
 
 	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
 	if tenantId == "" {
-		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
 	}
 
 	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
 	if clientId == "" {
-		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
 	}
 
-	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
-	if clientSecret == "" {
-		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
+	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
+	if username == "" {
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: types.ProviderOpenAIAzure,
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
-	client, err := NewOpenAIAzureClient(config)
-	require.NoError(s.T(), err, "Failed to create Azure OpenAI client")
+	client, err := NewOpenAIAzureUPClient(config)
+	require.NoError(s.T(), err, "Failed to create Azure OpenAI UP client")
 	s.client = client
 }
 
-func (s *OpenAIAzureIntegrationTestSuite) TearDownSuite() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TearDownSuite() {
 	if s.client != nil {
 		s.client.CloseIdleConnections()
 	}
@@ -85,17 +92,17 @@ func (s *OpenAIAzureIntegrationTestSuite) TearDownSuite() {
 	}
 }
 
-// TestValidateCredentials verifies that valid Azure credentials pass validation
-func (s *OpenAIAzureIntegrationTestSuite) TestValidateCredentials() {
+// TestValidateCredentials verifies that valid Azure UP credentials pass validation
+func (s *OpenAIAzureUPIntegrationTestSuite) TestValidateCredentials() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	err := s.client.ValidateCredentials(ctx)
-	assert.NoError(s.T(), err, "Valid Azure credentials should pass validation")
+	assert.NoError(s.T(), err, "Valid Azure UP credentials should pass validation")
 }
 
 // TestCallWithPrompt verifies a basic prompt call returns a valid JSON response
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPrompt() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPrompt() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -113,7 +120,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPrompt() {
 }
 
 // TestCallWithMessages verifies multi-turn conversation support
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithMessages() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -133,7 +140,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages() {
 }
 
 // TestCallWithMessages_MultiTurn verifies a multi-turn conversation with context retention
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages_MultiTurn() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithMessages_MultiTurn() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -154,7 +161,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages_MultiTurn() {
 }
 
 // TestCallWithTools verifies function calling capabilities
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithTools() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithTools() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -199,7 +206,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithTools() {
 }
 
 // TestCallWithPromptStream verifies streaming response functionality
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptStream() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPromptStream() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -225,7 +232,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptStream() {
 }
 
 // TestCallWithPromptAndVariables verifies template variable substitution
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptAndVariables() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPromptAndVariables() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -243,7 +250,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptAndVariables() {
 }
 
 // TestCallWithPromptAndVariables_InvalidJSON verifies error on bad variable JSON
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptAndVariables_InvalidJSON() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPromptAndVariables_InvalidJSON() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -257,7 +264,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptAndVariables_Invalid
 }
 
 // TestGetModel verifies the model getter returns the configured model
-func (s *OpenAIAzureIntegrationTestSuite) TestGetModel() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestGetModel() {
 	expectedModel := os.Getenv("OPENAI_AZURE_MODEL")
 	model := s.client.GetModel()
 	assert.Equal(s.T(), expectedModel, model,
@@ -265,7 +272,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestGetModel() {
 }
 
 // TestCallWithPrompt_ContextCancellation verifies that cancelled contexts are handled
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPrompt_ContextCancellation() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPrompt_ContextCancellation() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
@@ -274,7 +281,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPrompt_ContextCancellation
 }
 
 // TestCallWithPromptStream_ContextCancellation verifies streaming handles cancellation
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptStream_ContextCancellation() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPromptStream_ContextCancellation() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
@@ -289,20 +296,20 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPromptStream_ContextCancel
 	assert.Error(s.T(), stream.Err(), "Stream should error on cancelled context")
 }
 
-// TestNewOpenAIAzureClient_NilConfig verifies nil config is rejected
-func (s *OpenAIAzureIntegrationTestSuite) TestNewOpenAIAzureClient_NilConfig() {
-	_, err := NewOpenAIAzureClient(nil)
+// TestNewOpenAIAzureUPClient_NilConfig verifies nil config is rejected
+func (s *OpenAIAzureUPIntegrationTestSuite) TestNewOpenAIAzureUPClient_NilConfig() {
+	_, err := NewOpenAIAzureUPClient(nil)
 	assert.Error(s.T(), err, "Nil config should produce an error")
 	assert.Contains(s.T(), err.Error(), "configuration is required")
 }
 
-// TestNewOpenAIAzureClient_Defaults verifies env var defaults are applied when config fields are empty
-func (s *OpenAIAzureIntegrationTestSuite) TestNewOpenAIAzureClient_Defaults() {
+// TestNewOpenAIAzureUPClient_Defaults verifies env var defaults are applied when config fields are empty
+func (s *OpenAIAzureUPIntegrationTestSuite) TestNewOpenAIAzureUPClient_Defaults() {
 	config := &types.AIConfig{
-		Provider: types.ProviderOpenAIAzure,
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
-	client, err := NewOpenAIAzureClient(config)
+	client, err := NewOpenAIAzureUPClient(config)
 	require.NoError(s.T(), err, "Client creation with env var defaults should succeed")
 	defer client.CloseIdleConnections()
 
@@ -315,17 +322,17 @@ func (s *OpenAIAzureIntegrationTestSuite) TestNewOpenAIAzureClient_Defaults() {
 		"Default temperature should be 0.7")
 }
 
-// TestNewOpenAIAzureClient_CustomConfig verifies custom config values override env var defaults
-func (s *OpenAIAzureIntegrationTestSuite) TestNewOpenAIAzureClient_CustomConfig() {
+// TestNewOpenAIAzureUPClient_CustomConfig verifies custom config values override env var defaults
+func (s *OpenAIAzureUPIntegrationTestSuite) TestNewOpenAIAzureUPClient_CustomConfig() {
 	config := &types.AIConfig{
-		Provider:    types.ProviderOpenAIAzure,
+		Provider:    types.ProviderOpenAIAzureUP,
 		BaseURL:     os.Getenv("OPENAI_AZURE_ENDPOINT"),
 		Model:       os.Getenv("OPENAI_AZURE_MODEL"),
 		MaxTokens:   2000,
 		Temperature: 0.5,
 	}
 
-	client, err := NewOpenAIAzureClient(config)
+	client, err := NewOpenAIAzureUPClient(config)
 	require.NoError(s.T(), err, "Client creation with custom config should succeed")
 	defer client.CloseIdleConnections()
 
@@ -335,7 +342,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestNewOpenAIAzureClient_CustomConfig(
 }
 
 // TestCloseIdleConnections verifies resource cleanup does not panic
-func (s *OpenAIAzureIntegrationTestSuite) TestCloseIdleConnections() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCloseIdleConnections() {
 	assert.NotPanics(s.T(), func() {
 		s.client.CloseIdleConnections()
 	}, "CloseIdleConnections should not panic")
@@ -350,7 +357,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCloseIdleConnections() {
 }
 
 // TestCallWithMessages_EmptyMessages verifies behavior with empty message slice
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages_EmptyMessages() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithMessages_EmptyMessages() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -361,7 +368,7 @@ func (s *OpenAIAzureIntegrationTestSuite) TestCallWithMessages_EmptyMessages() {
 }
 
 // TestCallWithPrompt_UsageTracking verifies that usage information is returned
-func (s *OpenAIAzureIntegrationTestSuite) TestCallWithPrompt_UsageTracking() {
+func (s *OpenAIAzureUPIntegrationTestSuite) TestCallWithPrompt_UsageTracking() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
