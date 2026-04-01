@@ -93,9 +93,9 @@ The output contains three values you need for your `.env` file:
 
 | Output field | Environment variable            |
 | ------------ | ------------------------------  |
-| `appId`      | `OPENAI_AZURE_CLIENT_ID`     |
+| `tenant`     | `OPENAI_AZURE_TENANT_ID`        |
+| `appId`      | `OPENAI_AZURE_CLIENT_ID`        |
 | `password`   | `OPENAI_AZURE_SP_CLIENT_SECRET` |
-| `tenant`     | `OPENAI_AZURE_TENANT_ID`     |
 
 ## Step 7: Assign RBAC Role to the Service Principal
 
