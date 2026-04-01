@@ -92,7 +92,57 @@ az rest --method GET `
 
 If MFA is enforced tenant-wide via Security Defaults, you can disable it in the Azure Portal under **Entra ID > Properties > Manage security defaults** (not recommended for production tenants).
 
-## Step 5: Configure Environment Variables
+## Step 5: Grant Delegated API Permission (Cognitive Services)
+
+The UsernamePassword (ROPC) flow is a delegated flow — the app acts on behalf of a user. Entra ID requires a consent record granting the app permission to call the Cognitive Services API as the user. Without this, authentication fails with `AADSTS65001: consent_required`.
+
+This is different from the service principal flow used by `openai-azure`, which authenticates as the app itself and doesn't need delegated consent.
+
+### Find the Cognitive Services service principal in your tenant
+
+```powershell
+az ad sp list `
+    --filter "displayName eq 'Microsoft Cognitive Services'" `
+    --query "[].{appId:appId, displayName:displayName}" -o table
+```
+
+Note the `AppId` value — you'll use it in the next commands.
+
+### Look up the `user_impersonation` permission ID
+
+```powershell
+az ad sp show `
+    --id <cognitive-services-app-id> `
+    --query "oauth2PermissionScopes[?value=='user_impersonation'].{id:id, value:value}" -o json
+```
+
+Note the `id` (a GUID) — this is the permission ID.
+
+### Declare the permission on the app registration
+
+```powershell
+az ad app permission add `
+    --id <your-app-registration-client-id> `
+    --api <cognitive-services-app-id> `
+    --api-permissions <permission-id>=Scope
+```
+
+### Grant admin consent
+
+This creates the OAuth2 consent record so Entra ID allows the app to acquire tokens on behalf of users:
+
+```powershell
+az ad app permission grant `
+    --id <your-app-registration-client-id> `
+    --api <cognitive-services-app-id> `
+    --scope "user_impersonation"
+```
+
+### Verify in the portal
+
+In **App registrations** → your app → **API permissions**, you should see `user_impersonation` under Microsoft Cognitive Services with Status showing "Granted for \<your tenant\>".
+
+## Step 6: Configure Environment Variables
 
 Add the following to your `.env` file. The endpoint, model, API version, tenant ID, and client ID are shared with the `openai-azure` provider:
 
@@ -111,7 +161,7 @@ OPENAI_AZURE_UP_USERNAME=goaiprovider@yourtenant.onmicrosoft.com
 OPENAI_AZURE_UP_PASSWORD=YourTemporaryPassword123!
 ```
 
-## Step 6: Run Integration Tests
+## Step 7: Run Integration Tests
 
 ```powershell
 go test ./openaiclient/... -v -tags=integration -run TestOpenAIAzureUPIntegrationTestSuite -timeout 5m
@@ -125,16 +175,13 @@ Double-check the username (must be the full UPN, e.g., `user@tenant.onmicrosoft.
 
 ### AADSTS65001: The user or administrator has not consented
 
-The app registration needs the `https://cognitiveservices.azure.com/.default` scope. Grant admin consent:
+The app registration is missing the delegated `user_impersonation` permission for Cognitive Services, or admin consent hasn't been granted. Complete Step 5 above. You can verify the consent record exists:
 
 ```powershell
-az ad app permission add `
-    --id <your-app-registration-client-id> `
-    --api 00000003-0000-0000-c000-000000000000 `
-    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
-
-az ad app permission admin-consent --id <your-app-registration-client-id>
+az ad app permission list --id <your-app-registration-client-id> -o table
 ```
+
+If the permission is listed but consent isn't granted, re-run the `az ad app permission grant` command from Step 5.
 
 ### AADSTS7000218: The request body must contain the following parameter: 'client_assertion' or 'client_secret'
 
