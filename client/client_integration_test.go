@@ -111,11 +111,11 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude() {
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-6"
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
@@ -135,11 +135,11 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_ValidateCred
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-6"
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
@@ -164,11 +164,11 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_CallWithProm
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-6"
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
@@ -201,11 +201,11 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_CallWithProm
 
 	model := os.Getenv("CLAUDE_MODEL")
 	if model == "" {
-		model = "claude-sonnet-4-6"
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		Model:    model,
@@ -232,10 +232,15 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_CallWithProm
 
 // TestCreateClient_Claude_InvalidCredentials verifies invalid credentials are rejected
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_InvalidCredentials() {
+	model := os.Getenv("CLAUDE_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   "sk-ant-invalid-key-for-testing",
-		Model:    "claude-sonnet-4-6",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -255,11 +260,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_Claude_ContextCance
 		s.T().Skip("CLAUDE_API_KEY not set, skipping Claude integration tests")
 	}
 
+	model := os.Getenv("CLAUDE_MODEL")
+	if model == "" {
+		s.T().Skip("CLAUDE_MODEL not set, skipping Claude integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "claude",
+		Provider: types.ProviderClaude,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
-		Model:    "claude-sonnet-4-6",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -287,7 +297,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock() {
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude-bedrock",
+		Provider: types.ProviderClaudeBedrock,
 		Model:    model,
 	}
 
@@ -309,7 +319,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_Valid
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude-bedrock",
+		Provider: types.ProviderClaudeBedrock,
 		Model:    model,
 	}
 
@@ -336,7 +346,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_CallW
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude-bedrock",
+		Provider: types.ProviderClaudeBedrock,
 		Model:    model,
 	}
 
@@ -371,7 +381,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_CallW
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude-bedrock",
+		Provider: types.ProviderClaudeBedrock,
 		Model:    model,
 	}
 
@@ -407,7 +417,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_ClaudeBedrock_Conte
 	}
 
 	config := &types.AIConfig{
-		Provider: "claude-bedrock",
+		Provider: types.ProviderClaudeBedrock,
 		Model:    model,
 	}
 
@@ -430,11 +440,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI() {
 		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
 	}
 
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -449,11 +464,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ValidateCred
 		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
 	}
 
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -473,11 +493,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_CallWithProm
 		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
 	}
 
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -506,11 +531,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_CallWithProm
 		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
 	}
 
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -534,10 +564,15 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_CallWithProm
 
 // TestCreateClient_OpenAI_InvalidCredentials verifies invalid credentials are rejected
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_InvalidCredentials() {
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   "sk-invalid-key-for-testing",
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -557,11 +592,16 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ContextCance
 		s.T().Skip("OPENAI_API_KEY not set, skipping OpenAI integration tests")
 	}
 
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_MODEL not set, skipping OpenAI integration tests")
+	}
+
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
-		Model:    "gpt-5.4-mini",
+		Model:    model,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -580,11 +620,36 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAI_ContextCance
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure() {
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
+	if clientSecret == "" {
+		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure",
+		Provider: types.ProviderOpenAIAzure,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -596,11 +661,36 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure() {
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_ValidateCredentials() {
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
+	if clientSecret == "" {
+		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure",
+		Provider: types.ProviderOpenAIAzure,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -617,11 +707,36 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_Validat
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWithPrompt() {
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
+	if clientSecret == "" {
+		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure",
+		Provider: types.ProviderOpenAIAzure,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -647,11 +762,36 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWit
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWithPromptAndVariables() {
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
+	if clientSecret == "" {
+		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure",
+		Provider: types.ProviderOpenAIAzure,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -677,11 +817,36 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_CallWit
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_ContextCancellation() {
 	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
 	if endpoint == "" {
-		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping OpenAI Azure integration tests")
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI service-principal integration tests")
+	}
+
+	clientSecret := os.Getenv("OPENAI_AZURE_SP_CLIENT_SECRET")
+	if clientSecret == "" {
+		s.T().Skip("OPENAI_AZURE_SP_CLIENT_SECRET not set, skipping Azure OpenAI service-principal integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure",
+		Provider: types.ProviderOpenAIAzure,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -698,13 +863,43 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzure_Context
 
 // TestCreateClient_OpenAIAzureUP verifies an OpenAI Azure UP client can be created and used
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
 	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
 	if username == "" {
-		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping OpenAI Azure UP integration tests")
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure-up",
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -714,13 +909,43 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP() {
 
 // TestCreateClient_OpenAIAzureUP_ValidateCredentials verifies credential validation through the factory
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_ValidateCredentials() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
 	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
 	if username == "" {
-		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping OpenAI Azure UP integration tests")
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure-up",
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -735,13 +960,43 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_Valid
 
 // TestCreateClient_OpenAIAzureUP_CallWithPrompt verifies a prompt call through the factory-created client
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_CallWithPrompt() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
 	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
 	if username == "" {
-		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping OpenAI Azure UP integration tests")
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure-up",
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -765,13 +1020,43 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_CallW
 
 // TestCreateClient_OpenAIAzureUP_CallWithPromptAndVariables verifies template variable substitution
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_CallWithPromptAndVariables() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
 	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
 	if username == "" {
-		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping OpenAI Azure UP integration tests")
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure-up",
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -795,13 +1080,43 @@ func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_CallW
 
 // TestCreateClient_OpenAIAzureUP_ContextCancellation verifies cancelled contexts are handled
 func (s *ClientFactoryIntegrationTestSuite) TestCreateClient_OpenAIAzureUP_ContextCancellation() {
+	endpoint := os.Getenv("OPENAI_AZURE_ENDPOINT")
+	if endpoint == "" {
+		s.T().Skip("OPENAI_AZURE_ENDPOINT not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	model := os.Getenv("OPENAI_AZURE_MODEL")
+	if model == "" {
+		s.T().Skip("OPENAI_AZURE_MODEL not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	version := os.Getenv("OPENAI_AZURE_API_VERSION")
+	if version == "" {
+		s.T().Skip("OPENAI_AZURE_API_VERSION not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	tenantId := os.Getenv("OPENAI_AZURE_TENANT_ID")
+	if tenantId == "" {
+		s.T().Skip("OPENAI_AZURE_TENANT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
+	clientId := os.Getenv("OPENAI_AZURE_CLIENT_ID")
+	if clientId == "" {
+		s.T().Skip("OPENAI_AZURE_CLIENT_ID not set, skipping Azure OpenAI username-password integration tests")
+	}
+
 	username := os.Getenv("OPENAI_AZURE_UP_USERNAME")
 	if username == "" {
-		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping OpenAI Azure UP integration tests")
+		s.T().Skip("OPENAI_AZURE_UP_USERNAME not set, skipping Azure OpenAI UP username-password integration tests")
+	}
+
+	password := os.Getenv("OPENAI_AZURE_UP_PASSWORD")
+	if password == "" {
+		s.T().Skip("OPENAI_AZURE_UP_PASSWORD not set, skipping Azure OpenAI UP username-password integration tests")
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai-azure-up",
+		Provider: types.ProviderOpenAIAzureUP,
 	}
 
 	client, err := s.factory.CreateClient(config)
@@ -825,7 +1140,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCallWithPromptAndVariables_Inval
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey != "" {
 		client, err = s.factory.CreateClient(&types.AIConfig{
-			Provider: "openai",
+			Provider: types.ProviderOpenAI,
 			APIKey:   apiKey,
 			BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 			Model:    "gpt-5.4-mini",
@@ -837,7 +1152,7 @@ func (s *ClientFactoryIntegrationTestSuite) TestCallWithPromptAndVariables_Inval
 			s.T().Skip("No API keys set, skipping test")
 		}
 		client, err = s.factory.CreateClient(&types.AIConfig{
-			Provider: "claude",
+			Provider: types.ProviderClaude,
 			APIKey:   apiKey,
 			BaseURL:  os.Getenv("CLAUDE_API_ENDPOINT"),
 		})

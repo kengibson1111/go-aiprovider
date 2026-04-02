@@ -48,7 +48,7 @@ func (s *OpenAIClientIntegrationTestSuite) SetupSuite() {
 	}
 
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:    model,
@@ -80,7 +80,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestValidateCredentials() {
 // TestValidateCredentials_InvalidKey verifies that an invalid API key is rejected
 func (s *OpenAIClientIntegrationTestSuite) TestValidateCredentials_InvalidKey() {
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   "sk-invalid-key-for-testing",
 		Model:    os.Getenv("OPENAI_MODEL"),
 	}
@@ -303,7 +303,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_Defaults() {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   apiKey,
 		BaseURL:  os.Getenv("OPENAI_API_ENDPOINT"),
 	}
@@ -325,7 +325,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_CustomConfig() {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 
 	config := &types.AIConfig{
-		Provider:    "openai",
+		Provider:    types.ProviderOpenAI,
 		APIKey:      apiKey,
 		BaseURL:     os.Getenv("OPENAI_API_ENDPOINT"),
 		Model:       os.Getenv("OPENAI_MODEL"),
@@ -352,7 +352,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_NilConfig() {
 // TestNewOpenAIClient_EmptyAPIKey verifies empty API key is rejected
 func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_EmptyAPIKey() {
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   "",
 	}
 
@@ -364,7 +364,7 @@ func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_EmptyAPIKey() {
 // TestNewOpenAIClient_WhitespaceAPIKey verifies whitespace-only API key is rejected
 func (s *OpenAIClientIntegrationTestSuite) TestNewOpenAIClient_WhitespaceAPIKey() {
 	config := &types.AIConfig{
-		Provider: "openai",
+		Provider: types.ProviderOpenAI,
 		APIKey:   "   ",
 	}
 
